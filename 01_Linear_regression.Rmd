@@ -1,0 +1,279 @@
+---
+title: "Discussion: Interpreting Linear Models"
+date: "September 13, 2022"
+author: "MA 678"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(learnr)
+library(foreign)
+library(knitr)
+library(arm)
+library(ggplot2)
+```
+
+# Linear Regression: An Example Using Munich Rent Data
+
+## 1. Introduction
+
+### 1.1 Prediction and Interpretation
+
+Two main purposes of statistical models are to make predictions and interpretations (comparison). Regression is a simple (?) and effective way of modeling to achieve both purposes.
+
+> To summarize: regression is a mathematical tool for making predictions. 
+
+> Regression coefficients can sometimes be interpreted as effects, but they can always be interpreted as average comparisons.  
+(From GHV chapter 6)
+
+In this tutorial, we will run linear regressions on the Munich Rent Index dataset from 1999 to model the relationships between the explanatory variables (living area, year of construction, location, etc.) and the response variable (net rent).
+
+
+### 1.2 Terms
+
+In a simple linear regression example,
+$$y=\beta_{0}+\beta_{1}x+\varepsilon $$
+we would call $x$ the *explanatory* variable and $y$ the *response* variable.
+
+> Explanatory variables are also known as independent variables, regressors or covariates. 
+
+> Response variables are also known as dependent variables or target variables.  
+(From FKLM chapter 1)
+
+In Andrew Gelman's books (GH, GHV) the commonly used terms are predictor and outcome variable. Generally we use these terms interchangeably.
+
+## 2. Loading Munich Rent Data 
+
+---
+
+### 2.1  Loading R Packages
+
+Reading the Munich rent dataset (which is a .dta file) requires the `read.dta()` function from the `foreign` package.
+
+If you are using a R package for the first time, you need to first install the package using `install.packages("package name")`. When it is installed on your machine, the `library()` function can be used to load the package.
+
+```{r}
+library(foreign)
+```
+
+To load a number of packages at a time, we can also use `p_load` command from the `pacman` package. The benefit of using `p_load` is that it will install the packages if they are not installed on your machine.
+
+```{r}
+pacman::p_load("foreign", "arm")
+```
+
+Here `arm` is another package we are going to use, which includes the function `display()`. Although basic functions that perform least squares linear regression come with base R, we oftentimes still need functions from different packages.
+
+
+### 2.2  Data Summary
+
+Loading the dataset using `read.dta()`, we can then take a look at the whole dataset using `View()` or a summary of the dataset using `summary()`
+
+```{r}
+# read data
+rents <- read.dta("rent99.dta")
+rents$location <- as.factor(rents$location)
+```
+
+
+```{r, echo = FALSE}
+rents$bath <- as.factor(rents$bath)
+rents$kitchen <- as.factor(rents$kitchen)
+rents$cheating <- as.factor(rents$cheating)
+rents$district <- as.factor(rents$district)
+```
+
+```{r}
+summary(rents)
+```
+
+  - `rent`: Net rent per month (in euros)
+  - `rentsqm`：Net rent per month per square meter (in euros)
+  - `area`: Living area in square meters
+  - `yearc`: Year of construction
+  - `location`: Quality of location according to an expert assessment
+        - `1` = average location 
+        - `2` = good location 
+        - `3` = top location
+  - `bath`: quality of bathroom: a a factor indicating whether the bath facilities are standard, 0, or premium, 1
+  - `kitchen`: Quality of kitchen: 0 standard 1 premium
+  - `cheating`: Central heating: a factor 0 without central heating, 1 with central heating.
+  - `district`: District in Munich
+
+## 3. Exploratory Data Analysis (EDA)
+
+---
+
+> Exploratory Data Analysis (EDA) is an approach/philosophy for data analysis that employs a variety of techniques (mostly graphical) to maximize insight into a data set, uncover underlying structure, extract important variables, detect outliers and anomalies, and test underlying assumptions. 
+
+It is almost always a good idea to start with plots and visualization to get to know the structure of your dataset no matter what kind of analytical methods you have in mind.
+
+To obtain a justification for a linear model, we need to check for linearity between each predictor and the outcome variable. We can also explore whether interaction term(s) need to be added, or whether there are outliers that can affect regression fit, etc. 
+
+
+### 3.1 Linearity  
+
+First, we explore the relationship between the area of the unit and its rent. Scatter plots and smoother lines are usually used to check the relationship between the outcome variable and continuous predictors. We use `ggplot()` from the `ggplot2` package to make plots, where `geom_point` creates the points and the `geom_smooth` creates the blue line for smoothed conditional means. Here the smoothing method is chosen to be linear regression (`lm`)
+
+```{r}
+ggplot(rents, mapping = aes(x = area, y = rent))+
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", formula = "y ~ x") +
+  theme_classic()
+```
+
+This plot indicates that relationship between rent and area can be treated as linear.
+
+The first line below creates a new variable, `age_of_building`, using year of construction information.
+
+```{r}
+rents$age_of_building <- 1999 - rents$yearc # newest building is from 1999
+
+ggplot(rents, mapping = aes(x = age_of_building, y = rent)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", formula = "y ~ x") +
+  theme_classic()
+```
+
+
+### 3.2 Categorical Predictors
+
+For factor/categorical predictors, we can use violin plot to visualize its relationship with the outcome variable. Here `location` is a categorical predictor with three levels (1, 2, 3). Although the quality of location according to an expert assessment is given as numbers, it should be treated as a factor variable instead of numeric.
+
+```{r}
+ggplot(rents, mapping = aes(location, rent)) +
+  geom_violin(fill = "skyblue", alpha = 0.5) +
+  theme_classic()
+```
+
+Violin plots describe the distribution of the data. From this plot we can roughly say that there is not much difference in rent index for location 1 and 2, however, it's a different case for location 3. The violin for location 3 is higher than the other two, and the data is more evenly distributed between the rent range. 
+
+
+### 3.3 Interaction
+
+Interactions describe a situation that when an predictor is at different levels, the relationship between the outcome and another predictor changes. If we suspect that different locations have different rent-area relationships, we can check it by color-coding the previous scatter plots by location.
+
+```{r}
+ggplot(rents, aes(area, rent, color = location)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", formula = "y ~ x") +
+  theme_classic()
+```
+
+
+
+```{r add_interactions, echo=FALSE}
+question("What is in the plot that indicates that we need to add an interaction term in the model?",
+  answer("The slope for locations 1 and 2 are different", correct = TRUE),
+  answer("There are outliers at the right hand side of the plot"),
+  answer("The rent of larger houses at location 2 have a larger variance"),
+  allow_retry = TRUE
+)
+```
+
+
+
+## 4. Linear Regression
+
+---
+
+### 4.1 One Predictor
+
+Linear regression with just one predictor is also called *simple* linear regression.
+
+We use the `lm()` function to fit a simple linear regression model, with rent as the outcome variable and living area as the predictor. The basic syntax is `lm(y ∼ x, data)`, where `y` is the outcome variable, `x` is the predictor, and `data` is the dataset in which these two variables are kept. 
+
+```{r}
+## continuous predictor
+fit_1 <- lm(rent ~ area, data = rents) 
+```
+
+If we type `fit_1`, basic model information is the output. 
+
+```{r fit_1_print}
+fit_1
+```
+
+For a more detailed model output, we can use `summary()` or `display()` (from the `arm` package). Either one should give us p-values and standard errors for the coefficients, as well as the $R^2$ statistic and $F$-statistic for the model. 
+
+```{r regout_print_summary}
+summary(fit_1)
+```
+
+```{r regout_print_display}
+display(fit_1)
+```
+
+The function `coef()` allows us to just access the coefficient estimates of the fitted model. We can extract a certain coefficient estimate by adding an index.
+
+```{r regout_print_coefficients}
+coef(fit_1)
+
+coef(fit_1)[1]
+```
+
+
+
+
+### 4.2 Multiple Predictors 
+
+Simple linear regression can be extended by adding more predictors (which is sometimes referred to as *multiple* regression). We present a simplified model for illustration where we predict rent using living area, years of construction, and quality of location.
+
+Fitting a multiple linear regression model using least squares, we again use the `lm()` function. The syntax `lm(y ∼ x1 + x2 + x3)` is used to fit a model with three predictors, `x1`, `x2`, and `x3`. The `summary()` function now outputs the regression coefficients for all the predictors.
+
+```{r}
+fit_2 <- lm(rent ~ age_of_building + area + location, data = rents) 
+summary(fit_2) 
+```
+
+As shown in the model summary, the coefficient of the baseline level of the categorical predictor, `location1`, is absorbed into the intercept. 
+When interpreting factor variables, you would always be comparing to reference levels. For example, in this model, we would say that when comparing two units that are built in the same year and have the same living area, on average, the rent of the unit in good location is going to be `r coef(fit_2)[4]` higher than that of the one in average location.
+
+`confint()` can be used to look at confidence intervals for the coefficient estimates.
+
+```{r}
+kable(confint(fit_2), digits = 2)
+```
+
+Another way to display the coefficients as well as the uncertainty is to use the `coefplot()` function in the `arm` package.
+
+```{r coefplot}
+coefplot(fit_2)
+```
+
+If we want to add interaction term(s), we could use `*` between predictors. `lm(y ~ x1 * x2)` would result in a model with three predictors: `x1`, `x2`, and `x1:x2`, their interaction.
+
+```{r}
+fit_3 <- lm(rent ~ age_of_building + area * location, data = rents) 
+summary(fit_3)
+```
+
+
+## 5. `glm` and `stan_glm`
+
+`glm` (or `lm`) is a function in base R to implement least squares linear regression. It is a quick and simple way to try things out.
+
+`stan_glm` (or `stan_lm`) is a function from the `rstanarm` package which you would come across early in the GHV book. It offers simple syntax to run Bayesian regularized linear models via Stan which uses Markov chain Monte Carlo simulation. Therefore it takes longer to run and requires a different set of functions to do model diagnosis.
+
+Despite the difference in methods, usually results from the two function should be very similar. When this does not happen, one should be mindful of the model being run (as it might be a tricky situation where your data or model setup make your model to misbehave). The results from stan_ functions oftentimes are more reliable since it has regularization and can be used as reference to model results without the stan prefix.
+
+```{r, message=FALSE, warning=FALSE}
+library(rstanarm)
+```
+
+```{r}
+fit_4 <- stan_glm(rent ~ age_of_building + area + location, data = rents)
+summary(fit_4)
+```
+
+```{r}
+coef(fit_4)
+```
+
+If you compare the coefficient estimates of this model from `stan_glm` and `lm`, you 'll see they are really close.
+
+```{r}
+coef(fit_2)
+```
