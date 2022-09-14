@@ -17,8 +17,9 @@ Simulate 100 data points from the linear model, $y =  a + bx$ + error, with $a =
 set.seed(100)
 a = 5
 b = 7
-x<- runif(100,0,50)
-error<- rnorm(100,0,3)
+n = 100
+x<- runif(n,0,50)
+error<- rnorm(n,0,3)
 y=a*x+b+error
 ```
 
