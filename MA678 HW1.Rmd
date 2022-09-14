@@ -1,6 +1,6 @@
 ---
 title: "HW 1 Solutions"
-author: "My Name"
+author: "Jing Xu"
 date: "Fall 2022"
 output: pdf_document
 ---
@@ -13,16 +13,29 @@ pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm")
 ## 7.2 Fake-data simulation and regression: 
 Simulate 100 data points from the linear model, $y =  a + bx$ + error, with $a = 5$, $b = 7$, the values of $x$ being sampled at random from a uniform distribution on the range $[0, 50]$, and errors that are normally distributed with mean 0 and standard deviation 3. 
 
+```{r}
+set.seed(100)
+a = 5
+b = 7
+x<- runif(100,0,50)
+error<- rnorm(100,0,3)
+y=a*x+b+error
+```
+
+
 ### 7.2a 
 Fit a regression line to these data and display the output. 
 
 ```{r}
+fit_1 <- lm(y~x)
+summary(fit_1)
 ```
 
 ### 7.2b 
 Graph a scatterplot of the data and the regression line. 
 
 ```{r}
+ggplot(fit_1)
 ```
 
 ### 7.2c 
