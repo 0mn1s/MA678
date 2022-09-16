@@ -21,7 +21,7 @@ n = 100
 x<- runif(n,0,50)
 error<- rnorm(n,0,3)
 y=a*x+b+error
-fake<- data.frame(x,y)
+fake_1<- data.frame(x,y)
 ```
 
 
@@ -29,7 +29,7 @@ fake<- data.frame(x,y)
 Fit a regression line to these data and display the output. 
 
 ```{r}
-fit_1 <- lm(y ~ x, data = fake)
+fit_1 <- lm(y ~ x, data = fake_1)
 plot(fit_1)
 ```
 
@@ -37,7 +37,7 @@ plot(fit_1)
 Graph a scatterplot of the data and the regression line. 
 
 ```{r}
-ggplot(fake, mapping = aes(x,y))+
+ggplot(fake_1, mapping = aes(x,y))+
   geom_point(alpha = 0.5) +
   geom_smooth(method = "lm", formula = "y ~ x") +
   theme_classic()
@@ -54,14 +54,15 @@ Simulate 100 data points from the model $y = a + b x + c x^2$ + error, with the 
 
 ```{r}
 set.seed(100)
-a = 5
-b = 7
-c = 9
+a = 1
+b = -10
+c = 1
 n = 100
 x<- runif(n,0,50)
 error<- rnorm(n,0,3)
 y=a+b*x+c*x^2
-fake<- data.frame(x,y)
+fake_2<- data.frame(x,y)
+plot(x,y)
 ```
 
 ### 7.3 a
