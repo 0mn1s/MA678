@@ -69,6 +69,7 @@ plot(x,y)
 Fit a regression line `stan_glm(y ~ x)` to these data and display the output. 
 
 ```{r}
+fit_2<-
 ```
 
 ### 7.3b
