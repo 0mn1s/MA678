@@ -52,6 +52,17 @@ Use the `text` function in R to add the formula of the fitted line to the graph.
 ## 7.3 Fake-data simulation and fitting the wrong model: 
 Simulate 100 data points from the model $y = a + b x + c x^2$ + error, with the values of $x$ being sampled at random from a uniform  distribution on the range $[0, 50]$, errors that are normally distributed with mean 0 and standard  deviation 3, and $a$, $b$, $c$ chosen so that a scatterplot of the data shows a clear nonlinear curve. 
 
+```{r}
+set.seed(100)
+a = 5
+b = 7
+c = 9
+n = 100
+x<- runif(n,0,50)
+error<- rnorm(n,0,3)
+y=a+b*x+c*x^2
+fake<- data.frame(x,y)
+```
 
 ### 7.3 a
 Fit a regression line `stan_glm(y ~ x)` to these data and display the output. 
