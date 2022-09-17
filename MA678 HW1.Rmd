@@ -47,6 +47,11 @@ ggplot(fake_1, mapping = aes(x,y))+
 Use the `text` function in R to add the formula of the fitted line to the graph. 
 
 ```{r}
+ggplot(fake_1, mapping = aes(x,y))+
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", formula = "y ~ x") +
+  theme_classic()
+text(x=10,y=200, "y=a*x+b")
 ```
 
 ## 7.3 Fake-data simulation and fitting the wrong model: 
@@ -69,13 +74,14 @@ plot(x,y)
 Fit a regression line `stan_glm(y ~ x)` to these data and display the output. 
 
 ```{r}
-fit_2<-
+fit_2 <- stan_glm(y ~ x, data=fake_2, prior_intercept=NULL, prior=NULL, prior_aux=NULL) |>print()
 ```
 
 ### 7.3b
 Graph a scatterplot of the data and the regression line. This is the best-fit linear regression.  What does “best-fit” mean in this context?
 
 ```{r}
+plot()
 ```
 
 
