@@ -81,8 +81,11 @@ fit_2 <- stan_glm(y ~ x, data=fake_2, prior_intercept=NULL, prior=NULL, prior_au
 Graph a scatterplot of the data and the regression line. This is the best-fit linear regression.  What does “best-fit” mean in this context?
 
 ```{r}
-plot()
+plot(fake_2)
+abline(fit_2, col = "red")
+
 ```
+the regression line with the least square residuals.
 
 
 ## 7.6 Formulating comparisons as regression models: 
