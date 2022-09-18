@@ -8,6 +8,8 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm")
+remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
+
 ```
 
 ## 7.2 Fake-data simulation and regression: 
@@ -92,6 +94,10 @@ the regression line with the least square residuals.
 Take the election forecasting model and simplify it by creating a binary predictor defined as $x = 0$ if income growth is less than 2% and $x = 1$ if income growth is more than 2%.
 
 ```{r}
+library(rosdata)
+data(hibbs)
+head(hibbs)
+summary(hibbs)
 ```
 
 ### 7.6a
