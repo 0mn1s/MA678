@@ -96,8 +96,10 @@ Take the election forecasting model and simplify it by creating a binary predict
 ```{r}
 library(rosdata)
 data(hibbs)
-head(hibbs)
-summary(hibbs)
+hibbs$x <- 1
+for(i in sum(hibbs$x)){
+  if hibbs$growth[i] >2, 
+}
 ```
 
 ### 7.6a
