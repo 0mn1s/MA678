@@ -9,6 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm")
 remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
+library(dplyr)
 
 ```
 
@@ -179,9 +180,6 @@ ggplot(fake_3, mapping = aes(x,y))+
 ## 10.1 Regression with interactions: 
 Simulate 100 data points from the model, $y = b_0 + b_1 x +  b_2 z + b_3 x z$ + error, with a continuous predictor $x$ and a binary predictor $z$, coefficients $b = c(1, 2, -1, -2)$, and errors drawn independently from a normal distribution with mean 0  and standard deviation 3, as follows. For each data point $i$, first draw $z_i$, equally likely to take on the values 0 and 1. Then draw $x_i$ from a normal distribution with mean $z_i$ and standard deviation 1. Then draw the error from its normal distribution and compute $y_i$.
 
-### 10.1a
-Display your simulated data as a graph of $y$ vs $x$, using dots and circles for the points with $z$ = 0 and 1, respectively. 
-
 ```{r}
 set.seed(100)
 b = c(1,2,-1,-2)
@@ -190,6 +188,19 @@ error = rnorm(n,0,3)
 z <- rbinom(n,1,0.5)
 x <- rnorm(n,z,1)
 y = b[1] + b[2]*x + b[3]*z + b[4]*x*z + error
+```
+
+### 10.1a
+Display your simulated data as a graph of $y$ vs $x$, using dots and circles for the points with $z$ = 0 and 1, respectively. 
+
+```{r}
+sim_1 <- data.frame(x,y,z)
+ggplot(sim_1,aes(x,y))+
+  geom_point(data=sim_1 %>% filter(z==0))+
+  geom_point(data=sim_1 %>% filter(z==1),
+             pch=1,
+             size=5)
+
 ```
 
 ### 10.1b
