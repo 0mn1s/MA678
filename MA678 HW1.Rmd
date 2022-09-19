@@ -74,7 +74,7 @@ plot(x,y)
 Fit a regression line `stan_glm(y ~ x)` to these data and display the output. 
 
 ```{r}
-fit_2 <- stan_glm(y ~ x, data=fake_2, prior_intercept=NULL, prior=NULL, prior_aux=NULL) |>print()
+fit_2 <- stan_glm(y ~ x, data=fake_2, prior_intercept=NULL, prior=NULL, prior_aux=NULL, refresh = 0) |>print()
 ```
 
 ### 7.3b
