@@ -74,7 +74,7 @@ plot(x,y)
 Fit a regression line `stan_glm(y ~ x)` to these data and display the output. 
 
 ```{r}
-fit_2 <- stan_glm(y ~ x, data=fake_2, prior_intercept=NULL, prior=NULL, prior_aux=NULL) |>print()
+fit_2 <- stan_glm(y ~ x, data=fake_2, prior_intercept=NULL, prior=NULL, prior_aux=NULL, refresh = 0) |>print()
 ```
 
 ### 7.3b
@@ -129,11 +129,15 @@ set.seed(100)
 n <- 100
 a <- 2
 b <- 3
-for (i in 1:n){
-y <- a + b*x + rnorm(n, 0, 5)
-fake <- data.frame(x, y)
-}
-fit <- stan_glm(y ~ x, data=fake, refresh=0)
+x = runif(n,0,20)
+error = rnorm(n,0,5)
+y <- a + b*x + error
+fake_3 <- data.frame(x, y)
+fit_glm <- stan_glm(y ~ x, data=fake_3, refresh=0)
+fit_lm <- lm(y~x, data=fake_3)
+summary(fit_glm)
+summary(fit_lm)
+# the results are nearly identical
 
 ```
 
@@ -141,12 +145,35 @@ fit <- stan_glm(y ~ x, data=fake, refresh=0)
 Plot the simulated data and the two fitted regression lines. 
 
 ```{r}
+ggplot(fake_3, mapping = aes(x,y))+
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", formula = "y ~ x", colour = "blue")+
+  geom_smooth(method = "stan_glm", formula = "y ~x", color = "red")+
+  theme_classic()
 ```
 
 ### 8.8c
 Repeat the two steps above, but try to create conditions for your simulation so that `lm` and `stan_glm` give much different results. 
 
 ```{r}
+set.seed(100)
+n <- 3
+a <- 2
+b <- 3
+x = runif(n,0,20)
+error = rnorm(n,0,5)
+y <- a + b*x + error
+fake_3 <- data.frame(x, y)
+fit_glm <- stan_glm(y ~ x, data=fake_3, refresh=0)
+fit_lm <- lm(y~x, data=fake_3)
+summary(fit_glm)
+summary(fit_lm)
+ggplot(fake_3, mapping = aes(x,y))+
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", formula = "y ~ x", colour = "blue") +
+  geom_smooth(method = "stan_glm", formula = "y ~x", color = "red")+
+  theme_classic()
+
 ```
 
 ## 10.1 Regression with interactions: 
@@ -156,6 +183,13 @@ Simulate 100 data points from the model, $y = b_0 + b_1 x +  b_2 z + b_3 x z$ + 
 Display your simulated data as a graph of $y$ vs $x$, using dots and circles for the points with $z$ = 0 and 1, respectively. 
 
 ```{r}
+set.seed(100)
+b = c(1,2,-1,-2)
+n = 100
+error = rnorm(n,0,3)
+z <- rbinom(n,1,0.5)
+x <- rnorm(n,z,1)
+y = b[1] + b[2]*x + b[3]*z + b[4]*x*z + error
 ```
 
 ### 10.1b
