@@ -85,7 +85,7 @@ plot(fake_2)
 abline(fit_2, col = "red")
 
 ```
-the regression line with the least square residuals.
+the regression line with the least squared errors.
 
 
 ## 7.6 Formulating comparisons as regression models: 
@@ -102,12 +102,20 @@ hibbs$x <- ifelse(hibbs$growth>=2,1,0)
 Compute the difference in incumbent party's vote share on average, comparing those two  groups of elections, and determine the standard error for this difference.
 
 ```{r}
+group1 <- hibbs[hibbs$x==1,]$vote
+group2 <- hibbs[hibbs$x==0,]$vote
+mean = mean(group1) - mean(group2)
 ```
 
 ### 7.6b
 Regress incumbent party's vote share on the binary predictor of income growth and check  that the resulting estimate and standard error are the same as above. 
 
 ```{r}
+set.seed(100)
+lr_1 <- stan_glm(vote ~ x, data=hibbs,refresh=0) |> print()
+lr_2 <- lm(vote ~ x, data=hibbs) |> print()
+#no obvious difference
+
 ```
 
 ## 8.8 Comparing lm and stan_glm: 
@@ -122,14 +130,11 @@ n <- 100
 a <- 2
 b <- 3
 for (i in 1:n){
-y <- a + b*x + rnorm(n, 0, sigma)
+y <- a + b*x + rnorm(n, 0, 5)
 fake <- data.frame(x, y)
-fit <- stan_glm(y ~ x, data=fake, refresh=0)
-b_hat <- coef(fit)["x"]
-b_se <- se(fit)["x"]
-cover_68[s] <- abs(b - b_hat) < t_68 * b_se
-cover_95[s] <- abs(b - b_hat) < t_95 * b_se
 }
+fit <- stan_glm(y ~ x, data=fake, refresh=0)
+
 ```
 
 ### 8.8b
