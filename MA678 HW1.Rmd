@@ -446,7 +446,12 @@ fit_108c <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refr
 Repeat the previous step, setting `iter` = 100 and then `iter` = 10. 
 
 ```{r}
+fit_108d1 <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refresh=0, iter = 100) |>print()
+fit_108d2 <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refresh=0, iter = 10) |>print()
 ```
 
 ### 10.8e
 How many simulations were needed to give a good approximation to the mean and standard error for the coefficient of beauty? 
+
+
+<!-- probably 100 times at least. -->
