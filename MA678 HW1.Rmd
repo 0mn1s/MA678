@@ -222,10 +222,11 @@ plot_10 <- ggplot(sim_1,aes(x,y))+
   geom_point(data=sim_1 %>% filter(z==1),
              pch=1,
              size=5) +
-  geom_abline(mapping = NULL, b_hat[1] + b_hat[2], b_hat[3],col="red")
+  
+  geom_abline(mapping = NULL, b_hat[1] , b_hat[3],col="green")+
   theme_classic()
 plot_10 
-abline(b_hat[1],b_hat[3],col="blue")
+
   
 
 ```
@@ -283,15 +284,15 @@ head(kidiq)
 Fit a regression of child test scores on mother's age, display the data and fitted model, check assumptions, and interpret the slope coefficient. Based on this analysis, when do you recommend mothers should give birth? What are you assuming in making this recommendation? 
 
 ```{r}
-fit_105 <- stan_glm(kid_score ~ mom_age, data = kidiq, refresh = 0)
-plot(kidiq$mom_age,kidiq$kid_score)
-abline(coef(fit_105), col = "red") 
-print(fit_105)
+fit_105a <- stan_glm(kid_score ~ mom_age, data = kidiq, refresh = 0)
+plot(kidiq$mom_age, kidiq$kid_score)
+abline(coef(fit_105a), col = "red") 
+print(fit_105a)
 
 # the coefficient indicates that a 1 year increase in mom's age is averagely 
-# associated with an increase of 0.7 in her kid's iq.
-# However, this is so wrong based on our daily experieces, since a 45 years old
-# pregnant woman is unlikey to have a smart baby. It mwans that there is something 
+# associated with an increase of 0.7 in her kid's IQ.
+# However, this is so wrong based on our daily experiences, since a 45 years old
+# pregnant woman is unlikely to have a smart baby. It means that there is something 
 # wrong with our model. 
 ```
 
@@ -299,6 +300,11 @@ print(fit_105)
 Repeat this for a regression that further includes mother's education, interpreting both slope coefficients in this model. Have your conclusions about the timing of birth changed? 
 
 ```{r}
+fit_105b <- stan_glm(kid_score ~ mom_age + mom_hs, data = kidiq, refresh = 0)
+plot(kidiq$mom_age, kidiq$kid_score)
+abline(coef(fit_105a), col = "red") 
+print(fit_105a)
+
 ```
 
 ### 10.5c
