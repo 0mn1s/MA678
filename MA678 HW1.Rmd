@@ -205,10 +205,9 @@ ggplot(sim_1,aes(x,y))+
   geom_point(data=sim_1 %>% filter(z==0))+
   geom_point(data=sim_1 %>% filter(z==1),
              pch=1,
-             size=5) +
-  theme_classic() +
-  geom_abline(b_hat[1] + b_hat[2], b_hat[3],col="magenta")
-
+             size=5) 
+  theme_classic()
+  
 ```
 
 ### 10.1b
@@ -218,14 +217,15 @@ Fit a regression predicting $y$ from $x$ and $z$ with no interaction. Make a gra
 fit_10 <- stan_glm(y ~ z + x,data=sim_1,refresh=0)
 print(fit_10)
 b_hat <- coef(fit_10)
-
-ggplot(sim_1,aes(x,y))+
+plot_10 <- ggplot(sim_1,aes(x,y))+
   geom_point(data=sim_1 %>% filter(z==0))+
   geom_point(data=sim_1 %>% filter(z==1),
              pch=1,
              size=5) +
-  abline(b_hat[1] + b_hat[2], b_hat[3],col="red") +
-  abline(b_hat[1], b_hat[3],col="blue")
+  geom_abline(mapping = NULL, b_hat[1] + b_hat[2], b_hat[3],col="red")
+  theme_classic()
+plot_10 + abline(b_hat[1],b_hat[3],col="blue")
+  
 
 ```
 
