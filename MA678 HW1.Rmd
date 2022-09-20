@@ -266,22 +266,32 @@ Auxiliary parameter(s):
       Median MAD_SD
 sigma 0.4    0.0
 
-data_102 <- data.frame(Median=c(1.2,1.6,2.7,0.7),
-MAD_SD=c(0.2,0.4,0.3,0.5))
-row.names(data_102) = c("(Intercept)","x","z","x:z")
-head(data_102)
+
 ````
 
 ### 10.2a
 Write the equation of the estimated regression line of $y$ on $x$ for the treatment group and the control group, and the equation of the estimated regression line of $y$ on $x$ for the control group. 
 
 ```{r}
+data_102 <- data.frame(Median=c(1.2,1.6,2.7,0.7),
+MAD_SD=c(0.2,0.4,0.3,0.5))
+row.names(data_102) = c("(Intercept)","x","z","x:z")
+head(data_102)
 ```
 
 ### 10.2b
 Graph with pen on paper the two regression lines, assuming the values of $x$ fall in the range $(0, 10)$. On this graph also include a scatterplot of data (using open circles for treated units and dots for controls) that are consistent with the fitted model. 
 
 ```{r}
+n <- 100
+x <- runif(n,0,10)
+z <- rbinom(n,1,0.5)
+error <- rnorm(n,0,0.5)
+controly <- 1.2 + 1.6*x + error
+y <- 1.2 + 2.7 + (1.6 + 0.7)*x
+plot(x,controly,pch=20,col="red")
+par(new = TRUE)
+plot(x,y,pch=1,col="blue")
 ```
 
 ## 10.5 Regression modeling and prediction: 
@@ -401,12 +411,18 @@ Instructor A is a 50-year-old woman who is a native English speaker and has a be
 ```{r}
 inst_a <- data.frame(beauty=-1,female=1,age=50,minority=0,nonenglish=0)
 inst_b <- data.frame(beauty=-0.5,female=0,age=60,minority=0,nonenglish=0)
+sim_a <- posterior_predict(fit_106b,newdata=inst_a,draws=1000)
+sim_b <- posterior_predict(fit_106b,newdata=inst_b,draws=1000)
+
 ```
 
 ### 10.7b
 Make a histogram of the difference between the course evaluations for A and B. What is the probability that A will have a higher evaluation? 
 
 ```{r}
+ggplot() + 
+  geom_histogram(aes(sim_a[,1]),fill="blue") +
+  geom_histogram(aes(sim_b[,1]),fill="red")
 ```
 
 ## 10.8 How many simulation draws: 
