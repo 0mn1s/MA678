@@ -337,6 +337,11 @@ abline(b_hat2[1], b_hat2[2],col="blue")
 Finally, fit a regression of child test scores on mother's age and education level for the first 200 children and use this model to predict test scores for the next 200. Graphically display comparisons of the predicted and actual scores for the final 200 children. 
 
 ```{r}
+previous = kidiq[1:200,]
+predicion = kidiq[201:400,]
+fit_105d <- stan_glm(kid_score ~ mom_age + mom_hs + mom_age:mom_hs, data = previous,refresh=0)
+print(fit_105d)
+
 ```
 
 ## 10.6 Regression models with interactions: 
@@ -370,8 +375,8 @@ fit_106b <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refr
 print(fit_106b)
 ggplot(data = beauty, mapping = aes(beauty, eval)) +
   geom_point(size = 1) +
-  geom_abline(intercept = coef(fit_106b)[1] +coef(fit_106b)[3], coef(fit_106b)[2], col = "red")+
-    geom_abline(intercept = coef(fit_106b)[1], coef(fit_106b)[2], col = "red")
+  geom_abline(intercept = coef(fit_106b)[1] + coef(fit_106b)[3], coef(fit_106b)[2] + coef(fit_106b)[4], col = "red")+
+    geom_abline(intercept = coef(fit_106b)[1], coef(fit_106b)[2], col = "blue")
   theme_classic()
 
 ```
