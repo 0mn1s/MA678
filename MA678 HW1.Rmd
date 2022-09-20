@@ -399,6 +399,8 @@ Take one of the models from the previous exercise.
 Instructor A is a 50-year-old woman who is a native English speaker and has a beauty score of -1. Instructor B is a 60-year-old man who is a native English speaker and has a beauty score of -0.5. Simulate 1000 random draws of the course evaluation rating of these two instructors. In your simulation, use `posterior_predict` to account for the uncertainty in the regression parameters as well as predictive uncertainty. 
 
 ```{r}
+inst_a <- data.frame(beauty=-1,female=1,age=50,minority=0,nonenglish=0)
+inst_b <- data.frame(beauty=-0.5,female=0,age=60,minority=0,nonenglish=0)
 ```
 
 ### 10.7b
@@ -453,5 +455,7 @@ fit_108d2 <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,ref
 ### 10.8e
 How many simulations were needed to give a good approximation to the mean and standard error for the coefficient of beauty? 
 
+```{r}
+#probably 100 times at least.
+```
 
-<!-- probably 100 times at least. -->
