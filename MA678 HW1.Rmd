@@ -224,7 +224,8 @@ plot_10 <- ggplot(sim_1,aes(x,y))+
              size=5) +
   geom_abline(mapping = NULL, b_hat[1] + b_hat[2], b_hat[3],col="red")
   theme_classic()
-plot_10 + abline(b_hat[1],b_hat[3],col="blue")
+plot_10 
+abline(b_hat[1],b_hat[3],col="blue")
   
 
 ```
@@ -251,7 +252,7 @@ Auxiliary parameter(s):
       Median MAD_SD
 sigma 0.4    0.0
 
-data_102 = data.frame(Median=c(1.2,1.6,2.7,0.7),
+data_102 <- data.frame(Median=c(1.2,1.6,2.7,0.7),
 MAD_SD=c(0.2,0.4,0.3,0.5))
 row.names(data_102) = c("(Intercept)","x","z","x:z")
 head(data_102)
@@ -273,12 +274,25 @@ Graph with pen on paper the two regression lines, assuming the values of $x$ fal
 The folder `KidIQ` contains a subset of the children and mother data discussed earlier in the chapter. You have access to children's test scores at age 3,  mother's education, and the mother's age at the time she gave birth for a sample of 400 children. 
 
 ```{r}
+library(rosdata)
+data(kidiq)
+head(kidiq)
 ```
 
 ### 10.5a
 Fit a regression of child test scores on mother's age, display the data and fitted model, check assumptions, and interpret the slope coefficient. Based on this analysis, when do you recommend mothers should give birth? What are you assuming in making this recommendation? 
 
 ```{r}
+fit_105 <- stan_glm(kid_score ~ mom_age, data = kidiq, refresh = 0)
+plot(kidiq$mom_age,kidiq$kid_score)
+abline(coef(fit_105), col = "red") 
+print(fit_105)
+
+# the coefficient indicates that a 1 year increase in mom's age is averagely 
+# associated with an increase of 0.7 in her kid's iq.
+# However, this is so wrong based on our daily experieces, since a 45 years old
+# pregnant woman is unlikey to have a smart baby. It mwans that there is something 
+# wrong with our model. 
 ```
 
 ### 10.5b
