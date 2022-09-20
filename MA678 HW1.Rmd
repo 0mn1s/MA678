@@ -223,7 +223,8 @@ plot_10 <- ggplot(sim_1,aes(x,y))+
              pch=1,
              size=5) +
   
-  geom_abline(mapping = NULL, b_hat[1] , b_hat[3],col="green")+
+  geom_abline(intercept=b_hat[1]+b_hat[2],slope =b_hat[3],col="red")+
+  geom_abline(intercept=b_hat[1],slope =b_hat[3],col="blue")
   theme_classic()
 plot_10 
 
