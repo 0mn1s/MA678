@@ -312,6 +312,12 @@ abline(b_hat[1] + b_hat[3], b_hat[2],col="blue")
 Now create an indicator variable reflecting whether the mother has completed high school or not. Consider interactions between high school completion and mother's age. Also create a plot that shows the separate regression lines for each high school completion status group. 
 
 ```{r}
+fit_105c <- stan_glm(kid_score~mom_age + mom_hs + mom_age*mom_hs,data=kidiq,refresh=0)
+b_hat2 <- coef(fit_105c)
+plot(kidiq$mom_age,kidiq$kid_score)
+abline(b_hat2[1] + b_hat2[3], b_hat[2] + b_hat2[4],col="red")
+abline(b_hat2[1], b_hat2[2],col="blue")
+
 ```
 
 ### 10.5d
