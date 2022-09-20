@@ -7,9 +7,9 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm")
+pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm","dplyr","tidyverse")
 remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
-library(dplyr)
+
 
 ```
 
@@ -199,7 +199,10 @@ ggplot(sim_1,aes(x,y))+
   geom_point(data=sim_1 %>% filter(z==0))+
   geom_point(data=sim_1 %>% filter(z==1),
              pch=1,
-             size=5)
+             size=5) +
+  geom_smooth(data=sim_1,aes(x1,y1,col="red") +
+  geom_smooth(data=sim_1,aes() color = "blue")+
+  theme_classic()
 
 ```
 
@@ -207,12 +210,25 @@ ggplot(sim_1,aes(x,y))+
 Fit a regression predicting $y$ from $x$ and $z$ with no interaction. Make a graph with the data and two parallel lines showing the fitted model. 
 
 ```{r}
+fit_10 <- stan_glm(y ~ z + x,data=sim_1,refresh=0)
+print(fit_10)
+b_hat <- coef(fit_10)
+
+ggplot(sim_1,aes(x,y))+
+  geom_point(data=sim_1 %>% filter(z==0))+
+  geom_point(data=sim_1 %>% filter(z==1),
+             pch=1,
+             size=5) +
+  abline(b_hat[1] + b_hat[2], b_hat[3],col="red") +
+  abline(b_hat[1], b_hat[3],col="blue")
+
 ```
 
 ### 10.1c
 Fit a regression predicting $y$ from $x$, $z$, and their interaction. Make a graph with the data and two lines showing the fitted model. 
 
 ```{r}
+
 ```
 
 
