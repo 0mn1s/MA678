@@ -119,9 +119,8 @@ Regress incumbent party's vote share on the binary predictor of income growth an
 
 ```{r}
 set.seed(100)
-lr_1 <- stan_glm(vote ~ x, data=hibbs,refresh=0) |> print()
-lr_2 <- lm(vote ~ x, data=hibbs) |> print()
-#no obvious difference
+lr <- stan_glm(vote ~ x, data=hibbs,refresh=0) |> print()
+#no obvious difference, less than 5%
 
 ```
 
@@ -347,6 +346,7 @@ See also Felton, Mitchell, and Stinson (2003) for more on this topic.
 
 ```{r}
 data(beauty)
+head(beauty)
 
 ```
 
@@ -354,12 +354,26 @@ data(beauty)
 Run a regression using beauty (the variable `beauty`) to predict course evaluations (`eval`),  adjusting for various other predictors. Graph the data and fitted model, and explain the meaning of each of the coefficients along with the residual standard deviation. Plot the residuals versus fitted values. 
 
 ```{r}
+fit_106 <- stan_glm(eval ~ beauty,data=beauty,refresh=0)
+print(fit_106)
+ggplot(data = beauty, mapping = aes(beauty, eval)) +
+  geom_point(size = 1) +
+  geom_abline(intercept = coef(fit_106)[1], coef(fit_106)[2], col = "red")
+  theme_classic()
 ```
 
 ### 10.6b
 Fit some other models, including beauty and also other predictors. Consider at least one model with interactions. For each model, explain the meaning of each of its estimated coefficients.
 
 ```{r}
+fit_106b <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refresh=0)
+print(fit_106b)
+ggplot(data = beauty, mapping = aes(beauty, eval)) +
+  geom_point(size = 1) +
+  geom_abline(intercept = coef(fit_106b)[1] +coef(fit_106b)[3], coef(fit_106b)[2], col = "red")+
+    geom_abline(intercept = coef(fit_106b)[1], coef(fit_106b)[2], col = "red")
+  theme_classic()
+
 ```
 
 ## 10.7 Predictive simulation for linear regression:
