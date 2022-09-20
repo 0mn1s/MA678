@@ -300,10 +300,11 @@ print(fit_105a)
 Repeat this for a regression that further includes mother's education, interpreting both slope coefficients in this model. Have your conclusions about the timing of birth changed? 
 
 ```{r}
-fit_105b <- stan_glm(kid_score ~ mom_age + mom_hs, data = kidiq, refresh = 0)
-plot(kidiq$mom_age, kidiq$kid_score)
-abline(coef(fit_105a), col = "red") 
-print(fit_105a)
+fit_105b <- stan_glm(kid_score~mom_age + mom_hs,data=kidiq,refresh=0)
+b_hat <- coef(fit_105b)
+plot(kidiq$mom_age,kidiq$kid_score)
+abline(b_hat[1], b_hat[2],col="red")
+abline(b_hat[1] + b_hat[3], b_hat[2],col="blue")
 
 ```
 
