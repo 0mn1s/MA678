@@ -315,11 +315,12 @@ Repeat this for a regression that further includes mother's education, interpret
 ```{r}
 fit_105b <- stan_glm(kid_score~mom_age + mom_hs,data=kidiq,refresh=0)
 b_hat <- coef(fit_105b)
-plot(kidiq$mom_age,kidiq$kid_score)
-  geom_point(data=kidiq %>% filter(mom_hs==0), col = "green")
-  geom_point(data=kidiq %>% filter(mom_hs==1), col = "yellow")
-  abline(b_hat[1], b_hat[2],col="red")
-  abline(b_hat[1] + b_hat[3], b_hat[2],col="blue")
+ggplot(data = kidiq, aes(mom_age,kid_score))+
+  geom_point(data=kidiq %>% filter(mom_hs==0), col = "green")+
+  geom_point(data=kidiq %>% filter(mom_hs==1), col = "yellow")+
+  geom_abline(intercept = b_hat[1] + b_hat[3], b_hat[2], col = "red")+
+  geom_abline(intercept = b_hat[1], b_hat[2], col = "blue")
+  theme_classic()
 
 ```
 
@@ -329,9 +330,11 @@ Now create an indicator variable reflecting whether the mother has completed hig
 ```{r}
 fit_105c <- stan_glm(kid_score~mom_age + mom_hs + mom_age*mom_hs,data=kidiq,refresh=0)
 b_hat2 <- coef(fit_105c)
-plot(kidiq$mom_age,kidiq$kid_score)
-abline(b_hat2[1] + b_hat2[3], b_hat[2] + b_hat2[4],col="red")
-abline(b_hat2[1], b_hat2[2],col="blue")
+ggplot(data = kidiq, aes(mom_age,kid_score))+
+  geom_point(data=kidiq %>% filter(mom_hs==0), col = "green")+
+  geom_point(data=kidiq %>% filter(mom_hs==1), col = "yellow")+
+  geom_abline(intercept = b_hat[1] + b_hat[3], b_hat[2] + b_hat[4], col = "red")+
+  geom_abline(intercept = b_hat[1], b_hat[2], col = "blue")
 
 ```
 
