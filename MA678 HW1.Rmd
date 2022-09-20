@@ -236,6 +236,19 @@ plot_10
 Fit a regression predicting $y$ from $x$, $z$, and their interaction. Make a graph with the data and two lines showing the fitted model. 
 
 ```{r}
+fit_10c <- stan_glm(y ~ z + x + z*x,data=sim_1,refresh=0)
+print(fit_10c)
+b_hat <- coef(fit_10c)
+plot_10c <- ggplot(sim_1,aes(x,y))+
+  geom_point(data=sim_1 %>% filter(z==0))+
+  geom_point(data=sim_1 %>% filter(z==1),
+             pch=1,
+             size=5) +
+  
+  geom_abline(intercept=b_hat[1]+b_hat[2],slope =b_hat[3] + b_hat[4],col="red")+
+  geom_abline(intercept=b_hat[1],slope =b_hat[3],col="blue")
+  theme_classic()
+plot_10c
 
 ```
 
@@ -333,6 +346,8 @@ The folder `Beauty` contains data (use file `beauty.csv`) from Hamermesh and Par
 See also Felton, Mitchell, and Stinson (2003) for more on this topic. 
 
 ```{r}
+data(beauty)
+
 ```
 
 ### 10.6a
