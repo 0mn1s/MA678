@@ -428,12 +428,18 @@ print(fit_106b)
 Compute the median and mad sd of the posterior simulations of the coefficient of beauty, and check that these are the same as the output from printing the fit. 
 
 ```{r}
+sims <-as.matrix(fit_106b)
+media <- apply(sims,2,median)
+mad_sd <- apply(sims,2,mad)
+print(cbind(round(media,1),round(mad_sd,1)))
 ```
 
 ### 10.8c
 Fit again, this time setting `iter` = 1000 in your `stan_glm` call. Do this a few times in order to get a sense of the simulation variability. 
 
 ```{r}
+fit_108c <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refresh=0, iter = 1000) |>print()
+
 ```
 
 ### 10.8d
