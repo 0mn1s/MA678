@@ -70,7 +70,7 @@ summary(earnings)
 log(57);log(80);log(342);log(66);log(150)
 
 ```
-
+![](hand.png)
 
 ## 12.6 
 *Logarithmic transformations*: The folder `Pollution` contains mortality rates and various environmental factors from 60 US metropolitan areas. For this exercise we shall model mortality rate given nitric oxides, sulfur dioxide, and hydrocarbons as inputs. this model is an extreme oversimplication, as it combines all sources of mortality and does not adjust for crucial factors such as age and smoking. We use it to illustrate log transformation in regression.  
