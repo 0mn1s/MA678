@@ -159,8 +159,7 @@ loo(fit_127b)
 ### (b) 
 Compare models from other exercises in this chapter.
 ```{r}
-loo(fit_126)
-loo(fit_126b)
+# all other models are using lm which can not apply leave-one-outvalidation
 ```
 
 
