@@ -64,6 +64,13 @@ Fill in the blanks: Approximately 68% of the people will have weights within a f
 ### (b) 
 Using pen and paper, sketch the regression line and scatterplot of log(weight) versus log(height) that make sense and are consistent with the fitted model. Be sure to label the axes of your graph.
 
+```{r}
+data(earnings)
+summary(earnings)
+log(57);log(80);log(342);log(66);log(150)
+
+```
+
 
 ## 12.6 
 *Logarithmic transformations*: The folder `Pollution` contains mortality rates and various environmental factors from 60 US metropolitan areas. For this exercise we shall model mortality rate given nitric oxides, sulfur dioxide, and hydrocarbons as inputs. this model is an extreme oversimplication, as it combines all sources of mortality and does not adjust for crucial factors such as age and smoking. We use it to illustrate log transformation in regression.  
@@ -72,24 +79,57 @@ Using pen and paper, sketch the regression line and scatterplot of log(weight) v
 Create a scatterplot of mortality rate versus level of nitric oxides. Do you think linear regression will fit these data well? Fit the regression and evaluate a residual plot from the regression.
 
 ```{r}
-
+data(pollution)
+head(pollution)
+fit_126 <- lm(pollution$mort ~ pollution$nox)
+ggplot(pollution)+
+  geom_point(mapping = aes(nox,mort))+
+  geom_abline(intercept = coef(fit_126)[1], slope = coef(fit_126)[2]) +
+  theme_classic()
+plot(fit_126,which = 1)
 ```
 
 ### (b) 
 Find an appropriate reansformation that will result in data more appropriate for linear regression. Fit a regression to the transformed data and evaluate the new residual plot.
 
 ```{r}
-
+pollution$lg_mort <- log(pollution$mort)
+pollution$lg_nox <- log(pollution$nox)
+fit_126b <- lm(pollution$lg_mort ~ pollution$lg_nox)
+ggplot(pollution)+
+  geom_point(mapping = aes(lg_nox,lg_mort))+
+  geom_abline(intercept = coef(fit_126b)[1], slope = coef(fit_126b)[2]) +
+  theme_classic()
+plot(fit_126b,which = 1)
 ```
 
 ### (c) 
 Interpret the slope coefficient from the model you chose in (b)
 
+A 1% increase in height will averagely results in 0.15% increase in weight.
+
 ### (d) 
 Now fit a model predicting mortality rate using levels of nitric oxides, sulfur dioxide, and hydrocarbons as inputs. Use appropriate transformation when helpful. Plot the fitted regression model and interpret the coefficients.
 
 ```{r}
-
+# using log() instead
+pollution$lg_so2 <- log(pollution$so2)
+pollution$lg_hc <- log(pollution$hc)
+fit_126d <- lm(pollution$lg_mort ~ pollution$lg_nox + pollution$lg_so2 + pollution$lg_hc)
+mean <- c(1, mean(pollution$lg_nox), mean(pollution$lg_so2), mean(pollution$lg_hc))
+c <- coef(fit_126d)
+ggplot(pollution)+
+  geom_point(mapping = aes(lg_nox,lg_mort))+
+  geom_abline(intercept = c[1] + mean[3]*c[3] + mean[4]*c[4], slope = c[2]) +
+  theme_classic()
+ggplot(pollution)+
+  geom_point(mapping = aes(lg_so2,lg_mort))+
+  geom_abline(intercept = c[1] + mean[2]*c[2] + mean[4]*c[4], slope = c[3]) +
+  theme_classic()
+ggplot(pollution)+
+  geom_point(mapping = aes(lg_hc,lg_mort))+
+  geom_abline(intercept = c[1] + mean[2]*c[2] + mean[3]*c[3], slope = c[4]) +
+  theme_classic()
 ```
 
 ### (e) 
