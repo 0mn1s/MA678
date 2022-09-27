@@ -7,6 +7,8 @@ author: Jing Xu
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm","dplyr","tidyverse")
+remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
 ```
 
 ## 11.5 
@@ -16,21 +18,28 @@ knitr::opts_chunk$set(echo = TRUE)
 Use R to fit a linear regression model predicting $y$ from $x_1$, $x_2$, using the first 40 data points in the file. Summarize the inferences and check the fit of your model.
 
 ```{r}
-
+library(rosdata)
+data(pyth)
+fit_1<-lm(y ~ x1 + x2,data = pyth[1:40,])
+summary(fit_1)
+#both x1 and x2 are significant, R square is also close to 1. 
 ```
 
 ### (b) 
 Display the estimated model graphically as in Figure 10.2
 
 ```{r}
-
+plot(pyth$x1[1:40],pyth$y[1:40],xlab = 'x1',ylab = 'y')
+abline(coef(fit_1)[1]+coef(fit_1)[3]*mean(pyth$x2[1:40]),coef(fit_1)[2])
+plot(pyth$x2[1:40],pyth$y[1:40],xlab = 'x2',ylab = 'y')
+abline(coef(fit_1)[1]+coef(fit_1)[2]*mean(pyth$x1[1:40]),coef(fit_1)[3])
 ```
 
 ### (c) 
 Make a residual plot for this model. Do the assumptions appear to be met?
 
 ```{r}
-
+plot(fit_1, which = 1)
 ```
 
 
@@ -38,7 +47,9 @@ Make a residual plot for this model. Do the assumptions appear to be met?
 Make predictions for the remaining 20 data points in the file. How confident do you feel about these predictions?
 
 ```{r}
-
+pyth_1 <- data.frame(x1 = pyth$x1[41:60], x2 = pyth$x2[41:60])
+predict(fit_1, pyth_1)
+#confidencial result based on a)
 ```
 
 
@@ -48,7 +59,7 @@ $$\log(\text{weight})=-3.8+2.1 \log(\text{height})+\text{error,} $$
 with errors that have standard deviation 0.25. Weights are in pounds and heights are in inches.
 
 ### (a) 
-Fill in the blanks: Approximately 68% of the people will have weights within a factor of ______ and ______ of their predicted values from the regression.
+Fill in the blanks: Approximately 68% of the people will have weights within a factor of __0.78____ and __1.28____ of their predicted values from the regression.
 
 ### (b) 
 Using pen and paper, sketch the regression line and scatterplot of log(weight) versus log(height) that make sense and are consistent with the fitted model. Be sure to label the axes of your graph.
