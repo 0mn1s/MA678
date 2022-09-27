@@ -210,12 +210,20 @@ better than b), but has the same weakness(intercept)
 ## 12.11
 *Elasticity*: An economist runs a regression examining the relations between the average price of cigarettes, $P$, and the quantity purchased, $Q$, across a large sample of counties in the United  States, assuming the functional form, $\log Q=\alpha+\beta \log P$. Suppose the estimate for $\beta$ is 0.3.  Interpret this coefficient. 
 
+1% increase in average price is averagely associated with an 0.3 increase in the quantity purchased of cigarettes.
 
 ## 12.13
 *Building regression models*: Return to the teaching evaluations data from Exercise 10.6. Fit regression models predicting evaluations given many of the inputs in the dataset. Consider interactions, combinations of predictors, and transformations, as appropriate. Consider several  models, discuss in detail the final model that you choose, and also explain why you chose it rather than the others you had considered. 
 
 ```{r}
+data
+head(beauty)
+fit_1213a <- lm(eval ~ beauty + female + age + female*age,data=beauty)
+summary(fit_1213a)
+fit_1213b <- lm(log(eval) ~ beauty + female + age + female*age,data=beauty )
+summary(fit_1213b)
 
+# choosing log(eval) instead.There is no clear difference between the two except for the residuals. Using log provides more normalized residuals,
 ```
 
 
@@ -223,5 +231,9 @@ better than b), but has the same weakness(intercept)
 Prediction from a fitted regression: Consider one of the fitted models for mesquite leaves, for example `fit_4`, in Section 12.6. Suppose you wish to use this model to make inferences about the average mesquite yield in a new set of trees whose predictors are in data frame called  new_trees. Give R code to obtain an estimate and standard error for this population average. You do not need to make the prediction; just give the code. 
 
 ```{r}
+data(mesquite)
+head(mesquite)
+fit_1214 <- stan_glm(formula = weight ~ diam1 + diam2 + canopy_height +
+total_height + group + density, data=mesquite, refresh = 0)
 
 ```
