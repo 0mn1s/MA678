@@ -136,7 +136,9 @@ ggplot(pollution)+
 Cross validate: fit the model you chose above to the first half of the data and then predict for the second half. You used all the data to construct the model in (d), so this is not really cross validation, but it gives a sense of how the steps of cross validation can be implemented.
 
 ```{r}
-
+fit_126e <- lm(pollution$lg_mort[1:30] ~ pollution$lg_nox[1:30] + pollution$lg_so2[1:30] + pollution$lg_hc[1:30])
+pred <- data.frame(x1 = pollution$lg_nox[31:60], x2 = pollution$lg_so2[31:60], x3 = pollution$lg_hc[31:60])
+predict(fit_126e, pred)
 ```
 
 ## 12.7 
@@ -146,11 +148,20 @@ Cross validate: fit the model you chose above to the first half of the data and 
 Compare models for earnings and for log(earnings) given height and sex as shown in page 84 and 192. Use `earnk` and `log(earnk)` as outcomes.
 
 ```{r}
-
+data(earnings)
+fit_127a <- stan_glm(earnk ~ height + male, data = earnings, refresh = 0)
+fit_127b <- stan_glm(log(earnk[earnk!=0]) ~ height[earnk!=0] + male[earnk!=0], data = earnings, refresh = 0)
+#adding if/else due to the missing values
+loo(fit_127a)
+loo(fit_127b)
 ```
 
 ### (b) 
 Compare models from other exercises in this chapter.
+```{r}
+loo(fit_126)
+loo(fit_126b)
+```
 
 
 ## 12.8 
@@ -165,8 +176,13 @@ Compare models from other exercises in this chapter.
 ### (a) 
 Give the equation of the regression line and the residual standard deviation of the regression.
 
+log(weight)=-5.521461 + 2*log(height) residual standard deviation: 0.05
+
+
 ### (b) 
 Suppose the standard deviation of log weights is 20% in this population. What, then, is the $R^{2}$ of the regression model described here?  
+
+0.8, 80% of animals is fitted instead of 95%, approximately.
 
 ## 12.9 
 *Linear and logarithmic transformations*: For a study of congressional elections, you would like a measure of the relative amount of money raised by each of the two major-party candidates in each district. Suppose that you know the amount of money raised by each candidate; label these dollar values $D_i$ and $R_i$. You would like to combine these into a single variable that can be included as an input variable into a model predicting vote share for the Democrats. Discuss the advantages and disadvantages of the following measures:  
@@ -174,15 +190,22 @@ Suppose the standard deviation of log weights is 20% in this population. What, t
 ### (a) 
 The simple difference, $D_i - R_i$
 
+easy to interpret, both for coefficient and interception, however, the difference in dollar amount might not fully convey the real difference considering the totals.
+
 ### (b) 
 The ratio, $D_i / R_i$
+
+easy to interpret, but hard to interpret the interception since it can not be zero
 
 ### (c) 
 The difference on the logarithmic scale, $\log D_i - \log R_i$   
 
+better than a)
+
 ### (d) 
 The relative proportion, $D_{i}/(D_{i}+R_{i})$. 
 
+better than b), but has the same weakness(intercept)
 
 ## 12.11
 *Elasticity*: An economist runs a regression examining the relations between the average price of cigarettes, $P$, and the quantity purchased, $Q$, across a large sample of counties in the United  States, assuming the functional form, $\log Q=\alpha+\beta \log P$. Suppose the estimate for $\beta$ is 0.3.  Interpret this coefficient. 
