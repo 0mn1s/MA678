@@ -176,6 +176,9 @@ Consider the following procedure:
 ### (a)
 True or false: the interval should contain the true value approximately 950 times. Explain your answer.
 
+Exactly, that's how a confidence interval being defined.
+
 ### (b)
 Same as above, except the error distribution is bimodal, not normal. True or false: the interval should contain the true value approximately 950 times. Explain your answer.
 
+As for a relativity large n, it will carry out the same result as in (a).
