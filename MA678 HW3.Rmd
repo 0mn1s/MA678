@@ -26,7 +26,14 @@ A few things to keep in mind :
 You want to gather data to determine which of two students is a better basketball shooter. You plan to have each student take $N$ shots and then compare their shooting percentages. Roughly how large does $N$ have to be for you to have a good chance of distinguishing a 30% shooter from a 40% shooter? 
 
 ```{r}
-
+# Considering the 95% confidence interval
+#se = sqrt(p_hat*(1-p_hat)/N) z-value = 1.96 depended on normal table
+p1 = 0.3 
+p2 = 0.4
+p_hat = abs(p1 - p2)
+z = 1.96
+N = z^2*(1-p_hat)/p_hat
+ceiling(N)
 ```
 
 
