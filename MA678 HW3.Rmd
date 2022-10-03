@@ -75,6 +75,8 @@ men_m = 69.1
 men_sd = 2.9
 women_m = 63.7
 women_sd = 2.7
+x <- rep(0, n)
+y <- rep(0, n)
 for (i in 1:1000){
   x[i] <- mean(rnorm(100, men_m, men_sd))
   y[i] <- mean(rnorm(100, women_m, women_sd))
@@ -92,14 +94,19 @@ cat("actual standard deviation = ", sqrt(men_sd^2 + women_sd^2)
 ## 5.8 Coverage of confidence intervals: 
 On page 15 there is a discussion of an experimental study of an education-related intervention in Jamaica, in which the point estimate of the treatment effect, on the log scale, was 0.35 with a standard error of 0.17. Suppose the true effect is 0.10---this seems more realistic than the point estimate of 0.35---so that the treatment on average would increase earnings by 0.10 on the log scale. Use simulation to study the statistical properties of this experiment, assuming the standard error is 0.17.
 
-```{r}
-
-```
 
 ### (a)
 Simulate 1000 independent replications of the experiment assuming that the point estimate is normally distributed with mean 0.10 and standard deviation 0.17.
 
 ```{r}
+set.seed(100)
+n_child <- 127
+n <- 1000
+exp <- list()
+for(i in 1:n){
+  exp[[i]] <- rnorm(n_child, 0.1, 0.17)
+  
+}
 
 ```
 
@@ -107,14 +114,39 @@ Simulate 1000 independent replications of the experiment assuming that the point
 For each replication, compute the 95% confidence interval. Check how many of these intervals include the true parameter value.
 
 ```{r}
-
+sample_mean <- list()
+sample_sd <- list()
+ci<- list()
+df <- n_child -1
+for (i in 1:n) {
+  sample_mean[i] <- mean(exp[[i]])
+  sample_sd[i] <- sd(exp[[i]])/sqrt(n_child)
+  ci[[i]] <- sample_mean[[i]] + qt(c(.025,.975),n_child -1)*sample_sd[[i]]
+  
+}
+a = 0
+for (i in 1:n){
+if (ci[[i]][1] <= 0.1 & ci[[i]][2]>=0.1){
+    a = a+1
+  }
+}
+cat("# of intervals include the true parameter value = ", a)
 ```
 
 ### (c)
 Compute the average and standard deviation of the 1000 point estimates; these represent the  mean and standard deviation of the sampling distribution of the estimated treatment effect. 
 
 ```{r}
-
+avg_mean = 0
+avg_sd = 0
+for( i in 1:1000){
+  avg_mean = avg_mean + sum(sample_mean[[i]])
+  avg_sd = avg_sd + sum(sample_sd[[i]])
+}
+avg_mean = avg_mean/n
+avg_sd = avg_sd/n
+cat("average mean = ", avg_mean, fill = TRUE)
+cat("average standard deviation = ", avg_sd, fill = TRUE)
 ```
 
 
