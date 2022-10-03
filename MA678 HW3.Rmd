@@ -7,6 +7,8 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm","dplyr","tidyverse")
+remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
 ```
 
 
@@ -51,7 +53,8 @@ The data are in the folder `Girls`. These proportions were used by von Mises (19
 Compute the standard deviation of these proportions and compare to the standard deviation that would be expected if the sexes of babies were independently decided with a constant probability over the 24-month period.
 
 ```{r}
-
+sd(birthdata)
+sqrt(mean(birthdata)*(1-mean(birthdata))/length(birthdata))
 ```
 
 ### (b)
@@ -65,7 +68,25 @@ The observed standard deviation of the 24 proportions will not be identical to i
 The heights of men in the United States are approximately normally distributed with mean 69.1 inches and standard deviation 2.9 inches. The heights of women are approximately normally distributed with mean 63.7 inches and standard deviation 2.7 inches. Let $x$ be the average height of 100 randomly sampled men, and $y$ be the average height of 100 randomly sampled women. In R, create 1000 simulations of $x - y$ and plot their histogram. Using the simulations, compute the mean and standard deviation of the distribution of $x - y$ and compare to their exact values.
 
 ```{r}
+set.seed(100)
+size = 100
+n = 1000
+men_m = 69.1
+men_sd = 2.9
+women_m = 63.7
+women_sd = 2.7
+for (i in 1:1000){
+  x[i] <- mean(rnorm(100, men_m, men_sd))
+  y[i] <- mean(rnorm(100, women_m, women_sd))
+  i+1
+}
+hist(x-y)
 
+cat("simulated mean = ", mean(x-y),fill = TRUE)
+cat("simulated standard deviation = ", sd(x-y), fill = TRUE)
+cat("actual mean = ", men_m - women_m,fill = TRUE)
+cat("actual standard deviation = ", sqrt(men_sd^2 + women_sd^2)
+, fill = TRUE)
 ```
 
 ## 5.8 Coverage of confidence intervals: 
