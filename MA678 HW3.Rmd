@@ -154,7 +154,13 @@ cat("average standard deviation = ", avg_sd, fill = TRUE)
 In this exercise and the next, you will simulate two variables that are statistically independent of each other to see what happens when we run a regression to  predict one from the other. Generate 1000 data points from a normal distribution with mean 0 and standard deviation 1 by typing `var1 <- rnorm(1000,0,1)` in R. Generate another variable in the same way (call it `var2`). Run a regression of one variable on the other. Is the slope coefficient "statistically significant"? We do not recommend summarizing regressions in this  way, but it can be useful to understand how this works, given that others will do so. 
 
 ```{r}
-
+set.seed(100)
+var1 <- rnorm(1000,0,1)
+var2 <- rnorm(1000,0,1)
+data = data.frame(var1,var2)
+fit_1 <- lm(var1 ~ var2)
+summary(fit_1)
+#we can hardly say so
 ```
 
 ## 11.3 Coverage of confidence intervals
