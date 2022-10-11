@@ -1,12 +1,14 @@
 ---
 title: "MA678 Homework 4"
-author: "Your Name"
+author: "Jing Xu"
 date: "10/4/2022"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load("ggplot2","rstanarm","dplyr","tidyverse")
+remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
 ```
 
 ## Disclaimer (remove after you've read)!
@@ -37,10 +39,15 @@ Compare two people who live the same distance from the nearest well but whose ar
 ### (a) 
 Use the divide-by-4 rule, based on the information from this regression output.  
 
+Holding all others constant, an increase of 1 arsenic level is averagely associated with no more than 11.5% increase in the probability of switching wells;  an increase of 100 distance is averagely associated with no more than 22.5% decrease in the probability of switching wells.
+
+Therefore, the second person has 5.25% higher probability of switching wells.
+
 
 ### (b) 
 Use predictive simulation from the fitted model in R, under the assumption that these two  people each live 50 meters from the nearest safe well. 
 
+based on the given R model, the first person has -22% probability of switching wells, and the second person has 1% probability of switching wells.
 
 ## 13.7 Graphing a fitted logistic regression
 We downloaded data with weight (in pounds) and age (in  years) from a random sample of American adults. We then defined a new variable:
@@ -60,20 +67,54 @@ height         0.28   0.02
 
 ### (a) 
 Graph the logistic regression curve (the probability that someone is heavy) over the approximate range of the data. Be clear where the line goes through the 50% probability  point.  
+```{r}
+height <- seq(0, 200, 1)
+prob <- invlogit(-21.51 + 0.28*height)
+df <- data.frame(height, prob)
+
+ggplot(data = df, aes(x = height, y = prob)) + 
+  geom_line(color = "blue", lwd = 1) + 
+  geom_hline(yintercept = .50, col = 'red') + 
+  geom_point(data = data.frame(prob = .50, height = (21.51)/0.28), mapping = aes(x = height, y = prob), color = "red")
+```
 
 ### (b) 
-Fill in the blank: near the 50% point, comparing two people who differ by one inch in height, you'll expect a difference of ____ in the probability of being heavy. 
+Fill in the blank: near the 50% point, comparing two people who differ by one inch in height, you'll expect a difference of __7%__ in the probability of being heavy. 
 
+0.28/4
 
 ## 13.8 Linear transformations
 In the regression from the previous exercise, suppose you replaced  height in inches by height in centimeters. What would then be the intercept and slope? 
 
+1 inch = 2.56 cm, let height_cm = height*2.56 
+after transformation we have: height = height_cm/2.56.
+substitute into the function: 
+Pr(heavy = 1) = logit(-21.51 + 0.28height) = logit(-21.51 + 0.28height_cm/2.56) = logit(-21.51 + 0.11 height_cm).
+
+noticed that intercept = -21.51 and slope = 0.11. 
  
 ## 13.10 Expressing a comparison of proportions as a logistic regression
 A randomized experiment is performed within a survey, and 1000 people are contacted. Half the people contacted are promised a $5 incentive to participate, and half are not promised an incentive. The result is a 50% response rate among the treated group and 40% response rate among the control group.  
 
 ### (a) 
 Set up these results as data in R. From these data, fit a logistic regression of response on the treatment indicator.  
+
+```{r}
+set.seed(100)
+x1 = rep(1, 500)
+x2 = rep(0, 500)
+y1 = rep(0, 500)
+y2 = rep(0, 500)
+
+y1[sample(500, 250, replace = FALSE)] = 1
+y2[sample(500, 200, replace = FALSE)] = 1
+df <- data.frame(treatment = c(x1, x2), response = c(y1, y2))
+
+fit_1 <- glm(response ~ treatment, data = df, family = 'binomial')
+b <- coef(fit_1)
+b
+
+```
 
 ### (b) 
 Compare to the results from Exercise 4.1. 
@@ -86,6 +127,29 @@ The folder `Rodents` contains data on rodents in a sample of New York City apart
 Build a logistic regression model to predict the presence of rodents (the variable `rodent2` in the dataset) given indicators for the ethnic groups (`race`). Combine categories as appropriate.  Discuss the estimated coefficients in the model.  
 
 ```{r}
+Rodents <- read.table("https://github.com/avehtari/ROS-Examples/raw/master/Rodents/rodents.dat", header = TRUE)
+# sample_n(Rodents, 100)
+# rodents_1 <-Rodents[-which(is.na(Rodents$rodent2)), ]
+Rodents$minority <- 1
+for (i in 1:length(Rodents)){
+  if(Rodents$race[i] ==1){
+    Rodents$minority[i] <- 0
+  }
+}
+
+fit_1 <- glm(rodent2 ~ minority, data = Rodents, family = binomial)
+# Householder race/ethnicity (1=White (non-hispanic) 
+# 2=Black (non-hispanic) 
+# 3=Puerto Rican 
+# 4=Other Hispanic 
+# 5=Asian/Pacific Islander 
+# 6=Amer-Indian/Native Alaskan 
+# 7=Two or more races)
+
+print(fit_1)
+b <- coef(fit_1)
+ggplot() + 
+  geom_line(data = data.frame(rodents_2 = invlogit(b[1] + b[2]*seq(0, 1)), minority = seq(0, 1)), mapping = aes(x = minority, y = rodents_2), color = "red")
 
 ```
 
@@ -93,7 +157,8 @@ Build a logistic regression model to predict the presence of rodents (the variab
 Add to your model some other potentially relevant predictors describing the apartment, building, and community district. Build your model using the general principles explained in Section 12.6. Discuss the coefficients for the ethnicity indicators in your model. 
 
 ```{r}
-
+fit_2 <- glm(rodent2 ~ housewgt + housing + unitflr2 + minority, data = Rodents, family = binomial)
+summary(fit_2)
 ```
 
 
