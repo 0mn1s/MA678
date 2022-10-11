@@ -7,7 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load("ggplot2","rstanarm","dplyr","tidyverse")
+pacman::p_load("ggplot2","rstanarm","dplyr","tidyverse", "rosdata")
 remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
 ```
 
@@ -100,25 +100,33 @@ A randomized experiment is performed within a survey, and 1000 people are contac
 Set up these results as data in R. From these data, fit a logistic regression of response on the treatment indicator.  
 
 ```{r}
+
 set.seed(100)
-x1 = rep(1, 500)
-x2 = rep(0, 500)
+x1 <- rep(1, 500)
+x2 <- rep(0, 500)
 y1 = rep(0, 500)
 y2 = rep(0, 500)
-
 y1[sample(500, 250, replace = FALSE)] = 1
 y2[sample(500, 200, replace = FALSE)] = 1
-df <- data.frame(treatment = c(x1, x2), response = c(y1, y2))
-
+df <- data.frame(response = c(y1, y2), treatment = c(x1, x2))
 fit_1 <- glm(response ~ treatment, data = df, family = 'binomial')
 b <- coef(fit_1)
-b
-
+treatment <- seq(0, 1, 0.01)
+response <- invlogit(b[1] + b[2]*treatment)
+df_1 <- data.frame(treatment, response)
+ggplot() + 
+  geom_line(data = df_1, mapping = aes(x = treatment, y = response), color = "red")
+  
 ```
 
 ### (b) 
 Compare to the results from Exercise 4.1. 
-
+```{r}
+ggplot() + 
+  geom_line(data = df_1, mapping = aes(x = treatment, y = response), color = "red")+
+  geom_abline(intercept = 0.4, slope = 0.1, color = "blue")
+```
+almost the same
 
 ## 13.11 Building a logistic regression model
 The folder `Rodents` contains data on rodents in a sample of New York City apartments.  
@@ -169,38 +177,100 @@ The well-switching data described in Section 13.7 are in the folder `Arsenic`.
 Fit a logistic regression for the probability of switching using log (distance to nearest safe well) as a predictor.
 
 ```{r}
-
+wells <- read.csv("https://github.com/avehtari/ROS-Examples/raw/master/Arsenic/data/wells.csv", header = TRUE)
+wells_1 <- wells %>%
+  data.frame(log_dist = log(wells$dist))
+fit_1 <- glm(switch ~ log_dist, data = wells_1, family = binomial)
+summary(fit_1)
 ```
 
 ### (b)
 Make a graph similar to Figure 13.8b displaying Pr(switch) as a function of distance to  nearest safe well, along with the data.
 
 ```{r}
+jitter <- function(x, a = 0.05){
+     ifelse(x==0, runif(length(x), 0, a), runif(length(x), 1 - a, 1))
+}
 
+wells_1$switch_1 <- jitter(wells_1$switch)
+b <- coef(fit_1)
+
+df_1 <-  data.frame(y = invlogit(b[1] + b[2]*seq(min(wells_1$log_dist), max(wells_1$log_dist), 0.01)), x = seq(min(wells_1$log_dist), max(wells_1$log_dist), 0.01))
+
+ggplot() + 
+  geom_point(data = wells_1, mapping = aes(x = log_dist, y = switch_1), color = "blue") + 
+  geom_line(data = df_1, mapping = aes(x = x, y = y), color = "red") + 
+  xlab("log(distance)") + ylab("switching well")
 ```
 
 ### (c)
 Make a residual plot and binned residual plot as in Figure 14.8.
 
 ```{r}
-
+plot(fitted(fit_1), resid(fit_1))
+library(arm)
+# x <- The expected values from the logistic regression.
+# y <- The residuals values from logistic regression (observed values minus expected values).
+pred <- predict(fit_1, newdata = wells_1, type = 'response')
+resid <- wells_1$switch - pred
+binnedplot(pred, resid)
 ```
 
 ### (d)
 Compute the error rate of the fitted model and compare to the error rate of the null model.
 
 ```{r}
-
+error <- mean((pred>.5 & wells_1$switch == 0) | (pred < .5 & wells_1$switch == 1)) 
+cat("the error rate of the fitted model = ", error, fill = TRUE)
+null_p <- mean(wells_1$switch)
+error_null <- mean((null_p > .5 & wells_1$switch == 0) | (null_p < .5 & wells_1$switch == 1)) 
+cat("the error rate of the null model = ", error_null, fill = TRUE)
 ```
 
 ### (e)
 Create indicator variables corresponding to `dist < 100`; `dist` between 100 and 200; and `dist > 200`. Fit a logistic regression for Pr(switch) using these indicators. With this new model, repeat the computations and graphs for part (a) of this exercise.
 
 ```{r}
+wells_1$dist_ind <- rep(NA, length(wells_1$switch))
+for (i in 1:dim(wells_1)[1]) {
+  if(wells_1$dist[i]<100){
+    wells_1$dist_ind[i] = 0
+  }
+  if(wells_1$dist[i]>100 & wells_1$dist[i]<200){
+    wells_1$dist_ind[i] = 1
+  }
+    if(wells_1$dist[i]>200){
+    wells_1$dist_ind[i] = 2
+  }
+}
+
+fit_2 <- glm(switch ~ dist_ind, data = wells_1, family = 'binomial')
+summary(fit_2)
+b <- coef(fit_2)
+jitter_1 <- function(x, a=0.5){
+  y = rep(NA, length(x))
+  for (i in 1:length(x)) {
+    if(x[i]==0){
+      y[i] = runif(1, 0, a)
+    }
+    if(x[i]==1){
+      y[i] = runif(1, 1 - a, 1)
+    }
+    if(x[i]==2){
+      y[i] = runif(1, 2 - a, 2)
+    }
+  }
+  return(y)
+}
+
+wells_1$dist_switch <- jitter_1(wells_1$dist_ind)
+
+
+ggplot() + 
+  geom_point(data = wells_1, mapping = aes(x = dist_ind, y = dist_switch), color = "blue") + 
+  geom_line(data = data.frame(y = invlogit(b[1] + b[2]*seq(min(wells_1$dist_ind), max(wells_1$dist_ind), 0.01)), x = seq(min(wells_1$dist_ind), max(wells_1$dist_ind), 0.01)), mapping = aes(x = x, y = y), color = "red")
 
 ```
-
-
 ## 14.7 Model building and comparison
 Continue with the well-switching data described in the previous exercise.
 
@@ -208,7 +278,10 @@ Continue with the well-switching data described in the previous exercise.
 Fit a logistic regression for the probability of switching using, as predictors, distance, log(arsenic), and their interaction. Interpret the estimated coefficients and their standard errors.
 
 ```{r}
-
+wells_2 <- data.frame(wells, log_arsenic = log(wells$arsenic))
+wells_2$switch_jitter = jitter_1(wells_2$switch)
+fit_1 <- glm(switch ~ dist + log_arsenic + dist:log_arsenic, data = wells_2, family = binomial)
+summary(fit_1)
 ```
 
 ### (b)
