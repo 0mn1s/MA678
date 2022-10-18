@@ -1,7 +1,7 @@
 ---
 title: "MA678 Homework 4"
 author: "Jing Xu"
-date: "10/4/2022"
+date: "10/10/2022"
 output: pdf_document
 ---
 
@@ -188,11 +188,11 @@ summary(fit_1)
 Make a graph similar to Figure 13.8b displaying Pr(switch) as a function of distance to  nearest safe well, along with the data.
 
 ```{r}
-jitter <- function(x, a = 0.05){
-     ifelse(x==0, runif(length(x), 0, a), runif(length(x), 1 - a, 1))
+jitter_binary <- function(a, jitt=0.05){
+  ifelse(a==0, runif(length(a), 0, jitt), runif(length(a), 1 - jitt, 1))
 }
 
-wells_1$switch_1 <- jitter(wells_1$switch)
+wells_1$switch_1 <- jitter_binary(wells_1$switch)
 b <- coef(fit_1)
 
 df_1 <-  data.frame(y = invlogit(b[1] + b[2]*seq(min(wells_1$log_dist), max(wells_1$log_dist), 0.01)), x = seq(min(wells_1$log_dist), max(wells_1$log_dist), 0.01))
@@ -303,5 +303,21 @@ iv. A comparison of `arsenic` = 1.0 to `arsenic` = 2.0, with `dist` held constan
 Discuss these results. 
 
 ```{r}
-
+fit_2 <- stan_glm(switch ~ dist + arsenic, data = wells, family = binomial, refresh = 0)
+print(fit_2)
+b <- coef(fit_2)
+dist0 <- 0
+dist100 <- 100
+dist200 <- 200
+ars.5 <- .5
+ars1 <- 1
+ars2 <- 2
+delta_1 <- invlogit(b[1] + b[2]*dist100 + b[3]*wells$arsenic) - invlogit(b[1] + b[2]*dist0 + b[3]*wells$arsenic)
+round(mean(delta_1), 2)
+delta_2 <- invlogit(b[1] + b[2]*dist200 + b[3]*wells$arsenic) - invlogit(b[1] + b[2]*dist100 + b[3]*wells$arsenic)
+round(mean(delta_2), 2)
+delta_3 <- invlogit(b[1] + b[2]*wells$dist + b[3]*ars1) - invlogit(b[1] + b[2]*wells$dist + b[3]*ars.5)
+round(mean(delta_3), 2)
+delta_4 <- invlogit(b[1] + b[2]*wells$dist + b[3]*ars2) - invlogit(b[1] + b[2]*wells$dist + b[3]*ars1)
+round(mean(delta_4), 2)
 ```
