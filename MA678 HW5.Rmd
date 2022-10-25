@@ -7,7 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load("rstanarm","dplyr","MASS","brms","ggplot2","glmx","boot")
+pacman::p_load("rstanarm","dplyr","MASS","haven","ggplot2","censReg","brms", "glmx")
 remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
 ```
 
@@ -49,6 +49,10 @@ Fit a negative binomial (overdispersed Poisson) model. What do you conclude rega
 ```{r}
 fit_1c <- glm.nb(fupacts ~ log(bupacts +1) + sex + couples + women_alone + bs_hiv, data = risky)
 summary(fit_1c)
+#check for overdispersion
+fit_1c$deviance/fit_1c$df.residual<=1
+#check for fitting
+pchisq(fit_1c$deviance, fit_1c$df.residual, lower.tail = F)
 ```
 
 ### d) 
@@ -56,7 +60,7 @@ These data include responses from both men and women from the participating coup
 
 ```{r}
 ```
-
+there's a linear relationship between these two variables, so the models don't fit well
 
 ## 15.3 Binomial regression
 Redo the basketball shooting example on page 270, making some changes:  
@@ -64,12 +68,28 @@ Redo the basketball shooting example on page 270, making some changes:
 ### (a) 
 Instead of having each player shoot 20 times, let the number of shots per player vary, drawn from the uniform distribution between 10 and 30.  
 ```{r}
+set.seed(100)
+N <- 100
+height <- rnorm(N, 72, 3)
+p <- 0.4 + 0.1*(height - 72)/3
+n <- floor(runif(N, min=10, max=31))
+y <- rbinom(N, n, p)
+data <- data.frame(n = n, y = y, height = height)
 ```
 
 ### (b) 
 Instead of having the true probability of success be linear, have the true probability be a logistic function, set so that Pr(success) = 0.3 for a player who is 5'9" and 0.4 for a 6' tall player. 
 
 ```{r}
+b1 <- (logit(.4) - logit(.3))/3
+b0 <- (logit(.4) - 72*b1)
+set.seed(100)
+N <- 100
+height <- rnorm(N, 72, 3)
+p <- invlogit(b0 + b1*height)
+n <- floor(runif(N, min=10, max=31))
+y <- rbinom(N, n, p)
+data <- data.frame(n = n, y = y, height = height)
 ```
 
 
@@ -77,6 +97,9 @@ Instead of having the true probability of success be linear, have the true proba
 Experimental data from the National Supported  Work example are in the folder `Lalonde`. Use the treatment indicator and pre-treatment variables to predict post-treatment (1978) earnings using a Tobit model. Interpret the model coefficients. 
 
 ```{r}
+lalonde <- haven::read_dta("http://www.nber.org/~rdehejia/data/nsw_dw.dta")
+fit_7 <- censReg(formula = re78 ~ re75 + re74, data = lalonde)
+summary(fit_7)
 ```
 
 
@@ -84,18 +107,26 @@ Experimental data from the National Supported  Work example are in the folder `L
 The folder `Congress` has the votes for the Democratic and Republican candidates in each U.S. congressional district in 1988, along with the parties' vote proportions in 1986 and an indicator for whether the incumbent was running for reelection in 1988. For your analysis, just use the elections that were contested by both parties in both years.  
 
 ```{r}
+library(rosdata)
+data(congress)
 ```
 
 ### (a) 
 Fit a linear regression using `stan_glm` with the usual normal-distribution model for the errors predicting 1988 Democratic vote share from the other variables and assess model fit.
 
 ```{r}
+df <- data.frame(vote = congress$v88_adj, past_vote = congress$v86_adj, inc = congress$inc88)
+fit_8a <- stan_glm(vote ~ past_vote + inc, data = df, refresh = 0)
+print(fit_8a)
+pp_check(fit_8a)
+
 ```
 
 ### (b) 
 Fit the same sort of model using the `brms` package with a $t$ distribution, using the `brm` function with the student family. Again assess model fit.  
 
 ```{r}
+fit_8b <- brm(vote ~ past_vote + inc, data = df, family = student(link = "identity"), refresh = 0)
 ```
 
 ### (c) 
@@ -109,17 +140,23 @@ Use the same data as the previous example with the goal instead of predicting fo
 Fit a standard logistic or probit regression and assess model fit.
 
 ```{r}
+fit_9a <- stan_glm(v88_adj ~ v86_adj + inc86, family = binomial(link = "probit"), data = congress, refresh = 0) 
+summary(fit_9a)
+pp_check(fit_9a)
 ```
 
 ### (b) 
 Fit a robit regression and assess model fit.
 
 ```{r}
+fit_9b <- rlm(v88_adj ~ v86_adj + inc86, family = binomial(link = "probit"), data = congress) 
+summary(fit_9b)
+plot(fit_9b, which = 1)
 ```
 
 ### (c) 
 Which model do you prefer? 
-
+robit regression model provides better residuals for conparison.
 
 ## 15.14 Model checking for count data
 The folder `RiskyBehavior` contains data from a study of behavior of couples at risk for HIV; see Exercise 15.1. 
@@ -128,6 +165,9 @@ The folder `RiskyBehavior` contains data from a study of behavior of couples at 
 Fit a Poisson regression predicting number of unprotected sex acts from baseline HIV status. Perform predictive simulation to generate 1000 datasets and record the percentage of observations that are equal to 0 and the percentage that are greater than 10 (the third quartile in the observed data) for each. Compare these to the observed value in the original data.
 
 ```{r}
+risky$bs_hiv <- as.factor(risky$bs_hiv)
+fit_15a <- glm(fupacts ~ bs_hiv, family = poisson, data = risky)
+
 ```
 
 ### (b) 
@@ -150,4 +190,12 @@ Exercise 15.7 used a Tobit model to fit a regression with an outcome that had mi
 Compare predictions that result from each of these models with each other. 
 
 ```{r}
+lalonde <- haven::read_dta("http://www.nber.org/~rdehejia/data/nsw_dw.dta")
+data_1 <- lalonde
+data_1$re78 <- ifelse((data_1$re78 > 0), 1, 0)
+fit15_1 <- glm(re78 ~ treat + sample + age + education + black + hispanic + married + nodegree, family = binomial(link = "log"), data = data_1)
+print(fit15_1)
+data_2 <- lalonde[which(lalonde$re78 > 0), ]
+fit15_2 <- glm(re78 ~ treat + sample + age + education + black + hispanic + married + nodegree, data = data_2)
+print(fit15_2)
 ```
