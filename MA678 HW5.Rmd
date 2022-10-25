@@ -1,12 +1,14 @@
 ---
 title: "MA678 Homework 5"
-author: "Your Name"
+author: "Jing Xu"
 date: "10/25/2022"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load("rstanarm","dplyr","MASS","brms","ggplot2","glmx","boot")
+remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
 ```
 
 ## 15.1 Poisson and negative binomial regression
@@ -16,18 +18,37 @@ The folder `RiskyBehavior` contains data from a randomized trial targeting coupl
 Model this outcome as a function of treatment assignment using a Poisson regression. Does the model fit well? Is there evidence of overdispersion?  
 
 ```{r}
+library(rosdata)
+data(risky)
+risky$fupacts <- round(risky$fupacts)
+risky$women_alone <- as.factor(risky$women_alone)
+risky$couples <- as.factor(risky$couples)
+fit_1a <- glm(fupacts ~ couples +women_alone, family = poisson(link = "log"), data = risky)
+summary(fit_1a)
+#check for overdispersion
+fit_1a$deviance/fit_1a$df.residual<=1
+#check for fitting
+pchisq(fit_1a$deviance, fit_1a$df.residual, lower.tail = F)
 ```
 
 ### b) 
 Next extend the model to include pre-treatment measures of the outcome and the additional pre-treatment variables included in the dataset. Does the model fit well? Is there evidence of overdispersion?  
 
 ```{r}
+fit_1b <- glm(fupacts ~ log(bupacts +1) + sex + couples + women_alone + bs_hiv, family = poisson(link = "log"), data = risky)
+summary(fit_1b)
+#check for overdispersion
+fit_1b$deviance/fit_1b$df.residual<=1
+#check for fitting
+pchisq(fit_1b$deviance, fit_1b$df.residual, lower.tail = F)
 ```
 
 ### c) 
 Fit a negative binomial (overdispersed Poisson) model. What do you conclude regarding effectiveness of the intervention?
 
 ```{r}
+fit_1c <- glm.nb(fupacts ~ log(bupacts +1) + sex + couples + women_alone + bs_hiv, data = risky)
+summary(fit_1c)
 ```
 
 ### d) 
