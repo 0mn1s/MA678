@@ -126,7 +126,7 @@ pp_check(fit_8a)
 Fit the same sort of model using the `brms` package with a $t$ distribution, using the `brm` function with the student family. Again assess model fit.  
 
 ```{r}
-fit_8b <- brm(vote ~ past_vote + inc, data = df, family = student(link = "identity"), refresh = 0)
+fit_8b <- brm(vote ~ past_vote + inc, family = student(link = "identity"), data = df, )
 ```
 
 ### (c) 
@@ -167,6 +167,8 @@ Fit a Poisson regression predicting number of unprotected sex acts from baseline
 ```{r}
 risky$bs_hiv <- as.factor(risky$bs_hiv)
 fit_15a <- glm(fupacts ~ bs_hiv, family = poisson, data = risky)
+risky$bs_hiv_bin <- ifelse(risky$bs_hiv == "negative", 0, 1)
+X = cbind(1, as.numeric(risky$bs_hiv_bin))
 
 ```
 
@@ -193,9 +195,9 @@ Compare predictions that result from each of these models with each other.
 lalonde <- haven::read_dta("http://www.nber.org/~rdehejia/data/nsw_dw.dta")
 data_1 <- lalonde
 data_1$re78 <- ifelse((data_1$re78 > 0), 1, 0)
-fit15_1 <- glm(re78 ~ treat + sample + age + education + black + hispanic + married + nodegree, family = binomial(link = "log"), data = data_1)
+fit15_1 <- glm(re78 ~ treat + age + education, family = binomial(link = "log"), data = data_1)
 print(fit15_1)
 data_2 <- lalonde[which(lalonde$re78 > 0), ]
-fit15_2 <- glm(re78 ~ treat + sample + age + education + black + hispanic + married + nodegree, data = data_2)
+fit15_2 <- glm(re78 ~ treat + age + education, data = data_2)
 print(fit15_2)
 ```
