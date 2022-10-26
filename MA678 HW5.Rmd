@@ -7,7 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load("rstanarm","dplyr","MASS","haven","ggplot2","censReg","brms", "glmx")
+pacman::p_load("rstanarm","dplyr","MASS","haven","ggplot2","censReg","brms", "arm")
 remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
 ```
 
@@ -126,7 +126,7 @@ pp_check(fit_8a)
 Fit the same sort of model using the `brms` package with a $t$ distribution, using the `brm` function with the student family. Again assess model fit.  
 
 ```{r}
-fit_8b <- brm(vote ~ past_vote + inc, family = student(link = "identity"), data = df, )
+# fit_8b <- brm(vote ~ past_vote + inc, family = student(link = "identity"), data = df )
 ```
 
 ### (c) 
@@ -166,9 +166,29 @@ Fit a Poisson regression predicting number of unprotected sex acts from baseline
 
 ```{r}
 risky$bs_hiv <- as.factor(risky$bs_hiv)
-fit_15a <- glm(fupacts ~ bs_hiv, family = poisson, data = risky)
+fit_15a <- stan_glm(fupacts ~ bs_hiv, family = poisson(link="log"), data = risky, refresh = 0)
 risky$bs_hiv_bin <- ifelse(risky$bs_hiv == "negative", 0, 1)
-X = cbind(1, as.numeric(risky$bs_hiv_bin))
+
+
+n_sim <- 1000
+fit_15a1 <- posterior_predict(fit_15a, draws = n)
+n <- length(risky$fupacts)
+
+
+t_rep0 <- rep(NA, n_sim)
+t_rep10 <- rep(NA, n_sim)
+r_0 <- mean(risky$fupacts == 0)
+r_10 <- mean(risky$fupacts > 10)
+
+for (i in 1:n) {
+  t_rep0[i] <- sum(as.numeric(fit_15a1[i, ] == 0))/n 
+  t_rep10[i] <- sum(as.numeric(fit_15a1[i, ] > 10))/n 
+}
+
+par(mfrow = c(1, 2))
+hist(t_rep0, xlab = "sex acts = 0")
+hist(t_rep10, xlab = "sex acts > 10")
+
 
 ```
 
@@ -176,12 +196,55 @@ X = cbind(1, as.numeric(risky$bs_hiv_bin))
 Repeat (a) using a negative binomial (overdispersed Poisson) regression.
 
 ```{r}
+fit_15b <- stan_glm(fupacts ~ bs_hiv, family=neg_binomial_2(link = "log"), data = risky, refresh = 0)
+
+
+n_sim <- 1000
+fit_15b2 <- posterior_predict(fit_15b, draws = n)
+n <- length(risky$fupacts)
+
+
+t_rep0 <- rep(NA, n_sim)
+t_rep10 <- rep(NA, n_sim)
+r_0 <- mean(risky$fupacts == 0)
+r_10 <- mean(risky$fupacts > 10)
+
+for (i in 1:n) {
+  t_rep0[i] <- sum(as.numeric(fit_15b2[i, ] == 0))/n 
+  t_rep10[i] <- sum(as.numeric(fit_15b2[i, ] > 10))/n 
+}
+
+par(mfrow = c(1, 2))
+hist(t_rep0, xlab = "sex acts = 0")
+hist(t_rep10, xlab = "sex acts > 10")
 ```
 
 ### (c) 
 Repeat (b), also including ethnicity and baseline number of unprotected sex acts as inputs.
 
 ```{r}
+fit_15c <- stan_glm(fupacts ~ bs_hiv + log(bupacts + 1) + sex, data=risky, family=neg_binomial_2(link = "log"), refresh=0)
+
+
+
+n_sim <- 1000
+fit_15c2 <- posterior_predict(fit_15c, draws = n)
+n <- length(risky$fupacts)
+
+
+t_rep0 <- rep(NA, n_sim)
+t_rep10 <- rep(NA, n_sim)
+r_0 <- mean(risky$fupacts == 0)
+r_10 <- mean(risky$fupacts > 10)
+
+for (i in 1:n) {
+  t_rep0[i] <- sum(as.numeric(fit_15c2[i, ] == 0))/n 
+  t_rep10[i] <- sum(as.numeric(fit_15c2[i, ] > 10))/n 
+}
+
+par(mfrow = c(1, 2))
+hist(t_rep0, xlab = "sex acts = 0")
+hist(t_rep10, xlab = "sex acts > 10")
 ```
 
 
