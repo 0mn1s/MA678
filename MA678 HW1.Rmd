@@ -7,7 +7,10 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm")
+pacman::p_load("bayesplot","knitr","arm","ggplot2","rstanarm","dplyr","tidyverse")
+remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
+
+
 ```
 
 ## 7.2 Fake-data simulation and regression: 
@@ -21,6 +24,7 @@ n = 100
 x<- runif(n,0,50)
 error<- rnorm(n,0,3)
 y=a*x+b+error
+fake_1<- data.frame(x,y)
 ```
 
 
@@ -28,56 +32,96 @@ y=a*x+b+error
 Fit a regression line to these data and display the output. 
 
 ```{r}
-fit_1 <- lm(y~x)
-summary(fit_1)
+fit_1 <- lm(y ~ x, data = fake_1)
+plot(fit_1)
 ```
 
 ### 7.2b 
 Graph a scatterplot of the data and the regression line. 
 
 ```{r}
-ggplot(fit_1)
+ggplot(fake_1, mapping = aes(x,y))+
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", formula = "y ~ x") +
+  theme_classic()
 ```
 
 ### 7.2c 
 Use the `text` function in R to add the formula of the fitted line to the graph. 
 
 ```{r}
+plot(x,y)
+abline(fit_1, col = "red")
+text(x=10,y=200, "y=a*x+b")
 ```
 
 ## 7.3 Fake-data simulation and fitting the wrong model: 
 Simulate 100 data points from the model $y = a + b x + c x^2$ + error, with the values of $x$ being sampled at random from a uniform  distribution on the range $[0, 50]$, errors that are normally distributed with mean 0 and standard  deviation 3, and $a$, $b$, $c$ chosen so that a scatterplot of the data shows a clear nonlinear curve. 
 
+```{r}
+set.seed(100)
+a = 1
+b = -10
+c = 1
+n = 100
+x<- runif(n,0,50)
+error<- rnorm(n,0,3)
+y=a+b*x+c*x^2
+fake_2<- data.frame(x,y)
+plot(x,y)
+```
 
 ### 7.3 a
 Fit a regression line `stan_glm(y ~ x)` to these data and display the output. 
 
 ```{r}
+fit_2 <- stan_glm(y ~ x, data=fake_2, prior_intercept=NULL, prior=NULL, prior_aux=NULL, refresh = 0) |>print()
 ```
 
 ### 7.3b
 Graph a scatterplot of the data and the regression line. This is the best-fit linear regression.  What does “best-fit” mean in this context?
 
 ```{r}
+plot(fake_2)
+abline(fit_2, col = "red")
+
 ```
+the regression line with the least squared errors.
 
 
 ## 7.6 Formulating comparisons as regression models: 
 Take the election forecasting model and simplify it by creating a binary predictor defined as $x = 0$ if income growth is less than 2% and $x = 1$ if income growth is more than 2%.
 
 ```{r}
+library(rosdata)
+data(hibbs)
+hibbs$x <- ifelse(hibbs$growth>=2,1,0)
+ 
 ```
 
 ### 7.6a
 Compute the difference in incumbent party's vote share on average, comparing those two  groups of elections, and determine the standard error for this difference.
 
 ```{r}
+group1 <- hibbs[hibbs$x==1,]$vote
+group2 <- hibbs[hibbs$x==0,]$vote
+mean = mean(group1) - mean(group2)
+n1 = length(group1)
+n2 = length(group2)
+sd_pooled = sqrt((var(group1)*(n1-1) + var(group2)*(n2-1))/(n1+n2-2))
+se=sd_pooled* sqrt(1/n1 + 1/n2)
+se
+
 ```
 
 ### 7.6b
 Regress incumbent party's vote share on the binary predictor of income growth and check  that the resulting estimate and standard error are the same as above. 
 
 ```{r}
+set.seed(100)
+lr <- stan_glm(vote ~ x, data=hibbs,refresh=0) |> print()
+#no obvious difference, less than 5%
+
 ```
 
 ## 8.8 Comparing lm and stan_glm: 
@@ -87,39 +131,124 @@ Use simulated data to compare least squares estimation to default Bayesian regre
 Simulate 100 data points from the model, $y = 2 + 3x$ + error, with predictors $x$ drawn from a uniform distribution from 0 to 20 and with independent errors drawn from the normal distribution with mean 0 and standard deviation 5. Fit the regression of $y$ on $x$ data using `lm` and `stan_glm` (using its default settings) and check that the two programs give nearly identical results.
 
 ```{r}
+set.seed(100)
+n <- 100
+a <- 2
+b <- 3
+x = runif(n,0,20)
+error = rnorm(n,0,5)
+y <- a + b*x + error
+fake_3 <- data.frame(x, y)
+fit_glm <- stan_glm(y ~ x, data=fake_3, refresh=0)
+fit_lm <- lm(y~x, data=fake_3)
+summary(fit_glm)
+summary(fit_lm)
+# the results are nearly identical
+
 ```
 
 ### 8.8b
 Plot the simulated data and the two fitted regression lines. 
 
 ```{r}
+ggplot(fake_3, mapping = aes(x,y))+
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", formula = "y ~ x", colour = "blue")+
+  geom_smooth(method = "stan_glm", formula = "y ~x", color = "red")+
+  theme_classic()
 ```
 
 ### 8.8c
 Repeat the two steps above, but try to create conditions for your simulation so that `lm` and `stan_glm` give much different results. 
 
 ```{r}
+set.seed(100)
+n <- 3
+a <- 2
+b <- 3
+x = runif(n,0,20)
+error = rnorm(n,0,5)
+y <- a + b*x + error
+fake_3 <- data.frame(x, y)
+fit_glm <- stan_glm(y ~ x, data=fake_3, refresh=0)
+fit_lm <- lm(y~x, data=fake_3)
+summary(fit_glm)
+summary(fit_lm)
+ggplot(fake_3, mapping = aes(x,y))+
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", formula = "y ~ x", colour = "blue") +
+  geom_smooth(method = "stan_glm", formula = "y ~x", color = "red")+
+  theme_classic()
+
 ```
 
 ## 10.1 Regression with interactions: 
 Simulate 100 data points from the model, $y = b_0 + b_1 x +  b_2 z + b_3 x z$ + error, with a continuous predictor $x$ and a binary predictor $z$, coefficients $b = c(1, 2, -1, -2)$, and errors drawn independently from a normal distribution with mean 0  and standard deviation 3, as follows. For each data point $i$, first draw $z_i$, equally likely to take on the values 0 and 1. Then draw $x_i$ from a normal distribution with mean $z_i$ and standard deviation 1. Then draw the error from its normal distribution and compute $y_i$.
 
+```{r}
+set.seed(100)
+b = c(1,2,-1,-2)
+n = 100
+error = rnorm(n,0,3)
+z <- rbinom(n,1,0.5)
+x <- rnorm(n,z,1)
+y = b[1] + b[2]*x + b[3]*z + b[4]*x*z + error
+```
+
 ### 10.1a
 Display your simulated data as a graph of $y$ vs $x$, using dots and circles for the points with $z$ = 0 and 1, respectively. 
 
 ```{r}
+sim_1 <- data.frame(x,y,z)
+ggplot(sim_1,aes(x,y))+
+  geom_point(data=sim_1 %>% filter(z==0))+
+  geom_point(data=sim_1 %>% filter(z==1),
+             pch=1,
+             size=5) 
+  theme_classic()
+  
 ```
 
 ### 10.1b
 Fit a regression predicting $y$ from $x$ and $z$ with no interaction. Make a graph with the data and two parallel lines showing the fitted model. 
 
 ```{r}
+fit_10 <- stan_glm(y ~ z + x,data=sim_1,refresh=0)
+print(fit_10)
+b_hat <- coef(fit_10)
+plot_10 <- ggplot(sim_1,aes(x,y))+
+  geom_point(data=sim_1 %>% filter(z==0))+
+  geom_point(data=sim_1 %>% filter(z==1),
+             pch=1,
+             size=5) +
+  
+  geom_abline(intercept=b_hat[1]+b_hat[2],slope =b_hat[3],col="red")+
+  geom_abline(intercept=b_hat[1],slope =b_hat[3],col="blue")
+  theme_classic()
+plot_10 
+
+  
+
 ```
 
 ### 10.1c
 Fit a regression predicting $y$ from $x$, $z$, and their interaction. Make a graph with the data and two lines showing the fitted model. 
 
 ```{r}
+fit_10c <- stan_glm(y ~ z + x + z*x,data=sim_1,refresh=0)
+print(fit_10c)
+b_hat <- coef(fit_10c)
+plot_10c <- ggplot(sim_1,aes(x,y))+
+  geom_point(data=sim_1 %>% filter(z==0))+
+  geom_point(data=sim_1 %>% filter(z==1),
+             pch=1,
+             size=5) +
+  
+  geom_abline(intercept=b_hat[1]+b_hat[2],slope =b_hat[3] + b_hat[4],col="red")+
+  geom_abline(intercept=b_hat[1],slope =b_hat[3],col="blue")
+  theme_classic()
+plot_10c
+
 ```
 
 
@@ -136,48 +265,98 @@ x:z         0.7    0.5
 Auxiliary parameter(s):
       Median MAD_SD
 sigma 0.4    0.0
+
+
 ````
 
 ### 10.2a
 Write the equation of the estimated regression line of $y$ on $x$ for the treatment group and the control group, and the equation of the estimated regression line of $y$ on $x$ for the control group. 
 
 ```{r}
+data_102 <- data.frame(Median=c(1.2,1.6,2.7,0.7),
+MAD_SD=c(0.2,0.4,0.3,0.5))
+row.names(data_102) = c("(Intercept)","x","z","x:z")
+head(data_102)
 ```
 
 ### 10.2b
 Graph with pen on paper the two regression lines, assuming the values of $x$ fall in the range $(0, 10)$. On this graph also include a scatterplot of data (using open circles for treated units and dots for controls) that are consistent with the fitted model. 
 
 ```{r}
+n <- 100
+x <- runif(n,0,10)
+z <- rbinom(n,1,0.5)
+error <- rnorm(n,0,0.5)
+controly <- 1.2 + 1.6*x + error
+y <- 1.2 + 2.7 + (1.6 + 0.7)*x
+plot(x,controly,pch=20,col="red")
+par(new = TRUE)
+plot(x,y,pch=1,col="blue")
 ```
 
 ## 10.5 Regression modeling and prediction: 
 The folder `KidIQ` contains a subset of the children and mother data discussed earlier in the chapter. You have access to children's test scores at age 3,  mother's education, and the mother's age at the time she gave birth for a sample of 400 children. 
 
 ```{r}
+library(rosdata)
+data(kidiq)
+head(kidiq)
 ```
 
 ### 10.5a
 Fit a regression of child test scores on mother's age, display the data and fitted model, check assumptions, and interpret the slope coefficient. Based on this analysis, when do you recommend mothers should give birth? What are you assuming in making this recommendation? 
 
 ```{r}
+fit_105a <- stan_glm(kid_score ~ mom_age, data = kidiq, refresh = 0)
+plot(kidiq$mom_age, kidiq$kid_score)
+abline(coef(fit_105a), col = "red") 
+print(fit_105a)
+
+# the coefficient indicates that a 1 year increase in mom's age is averagely 
+# associated with an increase of 0.7 in her kid's IQ.
+# However, this is so wrong based on our daily experiences, since a 45 years old
+# pregnant woman is unlikely to have a smart baby. It means that there is something 
+# wrong with our model. 
 ```
 
 ### 10.5b
 Repeat this for a regression that further includes mother's education, interpreting both slope coefficients in this model. Have your conclusions about the timing of birth changed? 
 
 ```{r}
+fit_105b <- stan_glm(kid_score~mom_age + mom_hs,data=kidiq,refresh=0)
+b_hat <- coef(fit_105b)
+ggplot(data = kidiq, aes(mom_age,kid_score))+
+  geom_point(data=kidiq %>% filter(mom_hs==0), col = "green")+
+  geom_point(data=kidiq %>% filter(mom_hs==1), col = "yellow")+
+  geom_abline(intercept = b_hat[1] + b_hat[3], b_hat[2], col = "red")+
+  geom_abline(intercept = b_hat[1], b_hat[2], col = "blue")
+  theme_classic()
+
 ```
 
 ### 10.5c
 Now create an indicator variable reflecting whether the mother has completed high school or not. Consider interactions between high school completion and mother's age. Also create a plot that shows the separate regression lines for each high school completion status group. 
 
 ```{r}
+fit_105c <- stan_glm(kid_score~mom_age + mom_hs + mom_age*mom_hs,data=kidiq,refresh=0)
+b_hat2 <- coef(fit_105c)
+ggplot(data = kidiq, aes(mom_age,kid_score))+
+  geom_point(data=kidiq %>% filter(mom_hs==0), col = "green")+
+  geom_point(data=kidiq %>% filter(mom_hs==1), col = "yellow")+
+  geom_abline(intercept = b_hat[1] + b_hat[3], b_hat[2] + b_hat[4], col = "red")+
+  geom_abline(intercept = b_hat[1], b_hat[2], col = "blue")
+
 ```
 
 ### 10.5d
 Finally, fit a regression of child test scores on mother's age and education level for the first 200 children and use this model to predict test scores for the next 200. Graphically display comparisons of the predicted and actual scores for the final 200 children. 
 
 ```{r}
+previous = kidiq[1:200,]
+predicion = kidiq[201:400,]
+fit_105d <- stan_glm(kid_score ~ mom_age + mom_hs + mom_age:mom_hs, data = previous,refresh=0)
+print(fit_105d)
+
 ```
 
 ## 10.6 Regression models with interactions: 
@@ -186,18 +365,41 @@ The folder `Beauty` contains data (use file `beauty.csv`) from Hamermesh and Par
 See also Felton, Mitchell, and Stinson (2003) for more on this topic. 
 
 ```{r}
+data(beauty)
+head(beauty)
+
 ```
 
 ### 10.6a
 Run a regression using beauty (the variable `beauty`) to predict course evaluations (`eval`),  adjusting for various other predictors. Graph the data and fitted model, and explain the meaning of each of the coefficients along with the residual standard deviation. Plot the residuals versus fitted values. 
 
 ```{r}
+fit_106 <- stan_glm(eval ~ beauty,data=beauty,refresh=0)
+print(fit_106)
+ggplot(data = beauty, mapping = aes(beauty, eval)) +
+  geom_point(size = 1) +
+  geom_abline(intercept = coef(fit_106)[1], coef(fit_106)[2], col = "red")
+  theme_classic()
 ```
 
 ### 10.6b
 Fit some other models, including beauty and also other predictors. Consider at least one model with interactions. For each model, explain the meaning of each of its estimated coefficients.
 
 ```{r}
+fit_106b <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refresh=0)
+print(fit_106b)
+ggplot(data = beauty, mapping = aes(beauty, eval)) +
+  geom_point(size = 1) +
+  geom_abline(intercept = coef(fit_106b)[1] + coef(fit_106b)[3], coef(fit_106b)[2] + coef(fit_106b)[4], col = "red")+
+    geom_abline(intercept = coef(fit_106b)[1], coef(fit_106b)[2], col = "blue")
+  theme_classic()
+  
+# if the professor is majority with average beauty, they are expected
+# to have an evaluation of 4.0. The slope coefficient of 0.2 means that professors with 1 more point in beauty
+# score seem to have an 0.2 points increase of evaluations.
+# If the professor is minority with average beauty, they are expected to have an average evaluation 0.2 lower
+# than majorities, at 3.9. Their slope is also lowered to 0, meaning it remains the same.But, the result may not be  # sound due to a relatively high sd.
+
 ```
 
 ## 10.7 Predictive simulation for linear regression:
@@ -207,12 +409,20 @@ Take one of the models from the previous exercise.
 Instructor A is a 50-year-old woman who is a native English speaker and has a beauty score of -1. Instructor B is a 60-year-old man who is a native English speaker and has a beauty score of -0.5. Simulate 1000 random draws of the course evaluation rating of these two instructors. In your simulation, use `posterior_predict` to account for the uncertainty in the regression parameters as well as predictive uncertainty. 
 
 ```{r}
+inst_a <- data.frame(beauty=-1,female=1,age=50,minority=0,nonenglish=0)
+inst_b <- data.frame(beauty=-0.5,female=0,age=60,minority=0,nonenglish=0)
+sim_a <- posterior_predict(fit_106b,newdata=inst_a,draws=1000)
+sim_b <- posterior_predict(fit_106b,newdata=inst_b,draws=1000)
+
 ```
 
 ### 10.7b
 Make a histogram of the difference between the course evaluations for A and B. What is the probability that A will have a higher evaluation? 
 
 ```{r}
+ggplot() + 
+  geom_histogram(aes(sim_a[,1]),fill="blue") +
+  geom_histogram(aes(sim_b[,1]),fill="red")
 ```
 
 ## 10.8 How many simulation draws: 
@@ -222,25 +432,46 @@ Take the model from Exercise 10.6 that predicts course evaluations from beauty a
 Display and discuss the fitted model. Focus on the estimate and standard error for the coefficient of beauty. 
 
 ```{r}
+print(fit_106b)
+
+# if the professor is majority with average beauty, they are expected
+# to have an evaluation of 4.0. The slope coefficient of 0.2 means that professors with 1 more point in beauty
+# score seem to have an 0.2 points increase of evaluations.
+# If the professor is minority with average beauty, they are expected to have an average evaluation 0.2 lower
+# than majorities, at 3.9. Their slope is also lowered to 0, meaning it remains the same.But, the result may not be  # sound due to a relatively high sd.
+
 ```
 
 ### 10.8b
 Compute the median and mad sd of the posterior simulations of the coefficient of beauty, and check that these are the same as the output from printing the fit. 
 
 ```{r}
+sims <-as.matrix(fit_106b)
+media <- apply(sims,2,median)
+mad_sd <- apply(sims,2,mad)
+print(cbind(round(media,1),round(mad_sd,1)))
 ```
 
 ### 10.8c
 Fit again, this time setting `iter` = 1000 in your `stan_glm` call. Do this a few times in order to get a sense of the simulation variability. 
 
 ```{r}
+fit_108c <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refresh=0, iter = 1000) |>print()
+
 ```
 
 ### 10.8d
 Repeat the previous step, setting `iter` = 100 and then `iter` = 10. 
 
 ```{r}
+fit_108d1 <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refresh=0, iter = 100) |>print()
+fit_108d2 <- stan_glm(eval ~ beauty + minority + beauty:minority,data=beauty,refresh=0, iter = 10) |>print()
 ```
 
 ### 10.8e
 How many simulations were needed to give a good approximation to the mean and standard error for the coefficient of beauty? 
+
+```{r}
+#probably 100 times at least.
+```
+
