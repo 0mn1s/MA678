@@ -7,7 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load("rstanarm","dplyr","MASS","haven","ggplot2","censReg","brms", "arm")
+pacman::p_load("rstanarm","dplyr","MASS","haven","ggplot2","censReg","brms", "arm", "scales")
 remotes::install_github("avehtari/ROS-Examples", subdir = "rpackage")
 ```
 
@@ -165,13 +165,14 @@ The folder `RiskyBehavior` contains data from a study of behavior of couples at 
 Fit a Poisson regression predicting number of unprotected sex acts from baseline HIV status. Perform predictive simulation to generate 1000 datasets and record the percentage of observations that are equal to 0 and the percentage that are greater than 10 (the third quartile in the observed data) for each. Compare these to the observed value in the original data.
 
 ```{r}
-risky$bs_hiv <- as.factor(risky$bs_hiv)
+
 fit_15a <- stan_glm(fupacts ~ bs_hiv, family = poisson(link="log"), data = risky, refresh = 0)
 risky$bs_hiv_bin <- ifelse(risky$bs_hiv == "negative", 0, 1)
 
 
 n_sim <- 1000
-fit_15a1 <- posterior_predict(fit_15a, draws = n)
+fit_15a1 <- predict(fit_15a, draws = n)
+#it keep goes wrong in KNIT but works well if run in RMD
 n <- length(risky$fupacts)
 
 
@@ -181,8 +182,8 @@ r_0 <- mean(risky$fupacts == 0)
 r_10 <- mean(risky$fupacts > 10)
 
 for (i in 1:n) {
-  t_rep0[i] <- sum(as.numeric(fit_15a1[i, ] == 0))/n 
-  t_rep10[i] <- sum(as.numeric(fit_15a1[i, ] > 10))/n 
+  t_rep0[i] <- sum(as.numeric(fit_15a1[i ] == 0))/n 
+  t_rep10[i] <- sum(as.numeric(fit_15a1[i ] > 10))/n 
 }
 
 par(mfrow = c(1, 2))
