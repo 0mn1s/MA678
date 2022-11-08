@@ -1,0 +1,187 @@
+---
+title: "MA678 Homework 6"
+author: "Jing Xu"
+date: "11/8/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,out.width="0.9\\linewidth",dev="pdf",fig.align  = 'center')
+library(ggplot2)
+library(knitr)
+library(arm)
+library(data.table)
+library(foreign)
+library(car)
+library(faraway)
+library(nnet)
+library(reshape2)
+library(VGAM)
+library(tidyverse)
+library(rosdata)
+```
+
+## Multinomial logit
+Using the individual-level survey data from the 2000 National Election Study (data in folder NES), predict party identification (which is on a five-point scale) using ideology and demographics with an ordered multinomial logit model.
+```{r, echo=FALSE}
+nes <- nes %>% filter(year == 2000) %>% select("partyid3", "race", "age", "ideo" ) 
+
+nes$partyid3 <- factor(nes$partyid3, labels=c("democrats", "independents",
+                                            "republicans", "apolitical"))
+```
+
+1. Summarize the parameter estimates numerically and also graphically. 
+```{r}
+estimation <- polr(partyid3 ~ ideo + race + age, Hess = T, data = nes)
+summary(estimation)
+ggplot(data = nes, aes(x = partyid3, y= race, group = 1)) + geom_line() + geom_point()
+ggplot(data = nes, aes(x = partyid3, y= ideo, group = 1)) + geom_line() + geom_point()
+ggplot(data = nes, aes(x = partyid3, y= age, group = 1)) + geom_line() + geom_point()
+```
+
+2. Explain the results from the fitted model.
+```{r}
+
+```
+
+3. Use a binned residual plot to assess the fit of the model.
+```{r}
+
+```
+
+
+
+## (Optional) Choice models
+Using the individual-level survey data from the election example described in Section 10.9 (data available in the folder NES), 
+
+```{r}
+
+```
+
+
+1. Fit a logistic regression model for the choice of supporting Democrats or Republicans. Then interpret the output from this regression in terms of a utility/choice model.
+```{r}
+
+```
+
+2. Repeat the previous exercise but now with three options: Democrat, no opinion, Republican. That is, fit an ordered logit model and then express it as a utility/choice mode
+```{r}
+
+```
+
+
+## Contingency table and ordered logit model
+In a prospective study of a new living attenuated recombinant vaccine for influenza, patients were randomly allocated to two groups, one of which was given the new vaccine and the other a saline placebo. The responses were titre levels of hemaglutinin inhibiting antibody found in the blood six weeks after vaccination; they were categorized as "small", "medium" or "large". 
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrr}
+  \hline
+treatment & small & moderate & large & Total \\ 
+  \hline
+placebo &  25 &   8 &   5 & 38 \\ 
+ vaccine &   6 &  18 &  11 & 35 \\ 
+   \hline
+\end{tabular}
+\end{table}
+The cell frequencies in the rows of table are constrained to add to the number of subjects in each treatment group (35 and 38 respectively). We want to know if the pattern of responses is the same for each treatment group.
+
+```{r,echo=FALSE}
+
+```
+
+1. Using a chi-square test and an appropriate log-linear model, test the hypothesis that the distribution of responses is the same for the placebo and vaccine groups.
+```{r}
+
+```
+
+2. For the model corresponding to the hypothesis of homogeneity of response distributions, calculate the fitted values, the Pearson and deviance residuals, and the goodness of fit statistics $X^2$ and $D$. Which of the cells of the table contribute most to $X^2$ and $D$? Explain and interpret these results.
+```{r}
+
+```
+
+3. Re-analyze these data using ordered logit model (use `polr`) to estimate the cut-points of a latent continuous response variable and to estimate a location shift between the two treatment groups. Sketch a rough diagram to illustrate the model which forms the conceptual base for this analysis.
+```{r}
+
+```
+
+
+## High School and Beyond 
+The `hsb` data was collected as a subset of the High School and Beyond study conducted by the National Education Longitudinal Studies program of the National Center for Education Statistics. The variables are gender; race; socioeconomic status; school type; chosen high school program type; scores on reading, writing, math, science, and social studies. We want to determine which factors are related to the choice of the type of program—academic, vocational, or general—that the students pursue in high school. The response is multinomial with three levels.
+
+```{r}
+data(hsb)
+?hsb
+```
+
+1. Fit a trinomial response model with the other relevant variables as predictors (untransformed).
+```{r}
+
+```
+
+2. For the student with id 99, compute the predicted probabilities of the three possible choices.
+```{r}
+
+```
+
+
+## Happiness
+Data were collected from 39 students in a University of Chicago MBA class and may be found in the dataset `happy`.
+```{r}
+library(faraway)
+data(happy)
+```
+
+1. Build a model for the level of happiness as a function of the other variables.
+```{r}
+
+```
+
+2. Interpret the parameters of your chosen model.
+```{r}
+
+```
+
+3. Predict the happiness distribution for subject whose parents earn $30,000 a year,
+who is lonely, not sexually active and has no job.
+```{r}
+
+```
+
+## Newspaper survey on Vietnam War
+A student newspaper conducted a survey of student opinions about the Vietnam War in May 1967. Responses were classified by sex, year in the program and one of four opinions. The survey was voluntary. The data may be found in the dataset `uncviet`.  Treat the opinion as the response and the sex and year as predictors. Build a proportional odds model, giving an interpretation to the estimates.
+
+```{r}
+data(uncviet)
+
+```
+
+## Pneumonoconiosis of coal miners
+The pneumo data gives the number of coal miners classified by radiological examination into one of three categories of pneumonoconiosis and by the number of years spent working at the coal face divided into eight categories.
+
+```{r}
+data(pneumo, package = "faraway")
+```
+
+1. Treating the pneumonoconiosis status as response variable as nominal, build a model for predicting the frequency of the three outcomes in terms of length of service and use it to predict the outcome for a miner with 25 years of service.
+```{r}
+
+```
+
+2. Repeat the analysis with the pneumonoconiosis status being treated as ordinal. 
+```{r}
+
+```
+
+3. Now treat the response variable as hierarchical with top level indicating whether
+the miner has the disease and the second level indicating, given they have the
+disease, whether they have a moderate or severe case. 
+```{r}
+
+```
+
+4. Compare the three analyses.
+```{r}
+
+```
+
