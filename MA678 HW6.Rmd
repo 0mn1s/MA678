@@ -32,21 +32,30 @@ nes$partyid3 <- factor(nes$partyid3, labels=c("democrats", "independents",
 
 1. Summarize the parameter estimates numerically and also graphically. 
 ```{r}
-estimation <- polr(partyid3 ~ ideo + race + age, Hess = T, data = nes)
-summary(estimation)
-ggplot(data = nes, aes(x = partyid3, y= race, group = 1)) + geom_line() + geom_point()
-ggplot(data = nes, aes(x = partyid3, y= ideo, group = 1)) + geom_line() + geom_point()
-ggplot(data = nes, aes(x = partyid3, y= age, group = 1)) + geom_line() + geom_point()
+fit_1 <- polr(factor(partyid3) ~ race + age + ideo, data = nes)
+summary(fit_1)
+round(summary(nes2000_polr)$coef,3)
+
+# plot <- melt(nes, id.vars = c("ideo", "race", "age"), variable.name = "partyid3", value.name = "prob")
+# 
+# ggplot(data = nes) + 
+#   geom_bar(stat = "identity") + aes(x = race, y = mean, fill = partyid3) + 
+#   facet_grid(age~ideo)
+
+
+
 ```
 
 2. Explain the results from the fitted model.
 ```{r}
+coef(fit_1)
 
 ```
+every unit increase of race or age is related to .202 or .005 decrease of log odds for partyid3 while every unit increase of ideology is associated to .578 positive change of it.
 
 3. Use a binned residual plot to assess the fit of the model.
 ```{r}
-
+residuals(fit_1)
 ```
 
 
@@ -87,22 +96,43 @@ placebo &  25 &   8 &   5 & 38 \\
 The cell frequencies in the rows of table are constrained to add to the number of subjects in each treatment group (35 and 38 respectively). We want to know if the pattern of responses is the same for each treatment group.
 
 ```{r,echo=FALSE}
-
+cell <- data.frame(treatment = factor(c("placebo", "vaccine")), 
+                        small = c(25, 6), 
+                        moderate = c(8, 18), 
+                        large = c(5, 11),
+                        total = c(38,35))
 ```
 
 1. Using a chi-square test and an appropriate log-linear model, test the hypothesis that the distribution of responses is the same for the placebo and vaccine groups.
 ```{r}
+chisquare <- chisq.test(cell[, 2:5]) |>print()
+fit_3 <- vglm(cbind(small, moderate, large) ~ treatment, family = multinomial, data = cell) |> print()
 
 ```
 
 2. For the model corresponding to the hypothesis of homogeneity of response distributions, calculate the fitted values, the Pearson and deviance residuals, and the goodness of fit statistics $X^2$ and $D$. Which of the cells of the table contribute most to $X^2$ and $D$? Explain and interpret these results.
 ```{r}
-
+fv <- fitted.values(fit_3)
+rp <- residuals(fit_3, type = 'pearson')
+rd <- residuals(fit_3, type = 'deviance')
+cat("the fitted value is ", fv, fill = TRUE)
+cat("the Pearson residuals is ", rp, fill = TRUE)
+cat("the deviance residuals is ", rd, fill = TRUE)
 ```
 
 3. Re-analyze these data using ordered logit model (use `polr`) to estimate the cut-points of a latent continuous response variable and to estimate a location shift between the two treatment groups. Sketch a rough diagram to illustrate the model which forms the conceptual base for this analysis.
 ```{r}
-
+df <- data.frame(treatment = c(rep('placebo',3),rep('vaccine',3)),
+                        size = rep(c('small','moderate','large'),2),
+                        value = c(25,8,5,6,18,11))%>%mutate(
+                          treatment = as.factor(treatment),
+                          size = as.factor(size)
+                        )
+fit_4 <- polr(size ~  treatment, Hess = T, data = df)
+summary(fit_4)
+ggplot(data = df, aes(x = treatment, y = size, group = 1)) + 
+  geom_point() + 
+  geom_line()
 ```
 
 
