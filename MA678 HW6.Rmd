@@ -34,7 +34,7 @@ nes$partyid3 <- factor(nes$partyid3, labels=c("democrats", "independents",
 ```{r}
 fit_1 <- polr(factor(partyid3) ~ race + age + ideo, data = nes)
 summary(fit_1)
-round(summary(nes2000_polr)$coef,3)
+
 
 # plot <- melt(nes, id.vars = c("ideo", "race", "age"), variable.name = "partyid3", value.name = "prob")
 # 
@@ -146,12 +146,13 @@ data(hsb)
 
 1. Fit a trinomial response model with the other relevant variables as predictors (untransformed).
 ```{r}
-
+fit_5 <- multinom(prog ~ gender + race + ses + schtyp + read + write + math + science + socst, hsb, trace = FALSE)
+summary(fit_5)
 ```
 
 2. For the student with id 99, compute the predicted probabilities of the three possible choices.
 ```{r}
-
+predict(fit_5,type="probs")[99,]
 ```
 
 
@@ -164,18 +165,20 @@ data(happy)
 
 1. Build a model for the level of happiness as a function of the other variables.
 ```{r}
-
+fit_6 <- polr(factor(happy) ~ money + sex + love + work, Hess = T, data = happy)
+summary(fit_6)
 ```
 
 2. Interpret the parameters of your chosen model.
 ```{r}
-
+coef(fit_6)
 ```
+every unit changing in money, sex, love, work is related to .022, -.473, 3.608. .888 difference of log odds for happy.
 
 3. Predict the happiness distribution for subject whose parents earn $30,000 a year,
 who is lonely, not sexually active and has no job.
 ```{r}
-
+predict(fit_6, newdata = data.frame(love = 0,sex = 0,work = 0,money = 30),type = "probs")
 ```
 
 ## Newspaper survey on Vietnam War
@@ -183,7 +186,13 @@ A student newspaper conducted a survey of student opinions about the Vietnam War
 
 ```{r}
 data(uncviet)
+df <- uncviet %>%
+  group_by(sex,year) %>%
+  summarise(y = sum(y))
+head(df)
 
+fit_7 <- glm(y ~ sex + year, family = poisson(link = 'log') , data = df)
+summary(fit_7)
 ```
 
 ## Pneumonoconiosis of coal miners
@@ -195,19 +204,25 @@ data(pneumo, package = "faraway")
 
 1. Treating the pneumonoconiosis status as response variable as nominal, build a model for predicting the frequency of the three outcomes in terms of length of service and use it to predict the outcome for a miner with 25 years of service.
 ```{r}
+fit_8 <- multinom(status ~ year, Hess = T, weights = Freq, data = pneumo)
+summary(fit_8)
 
+predict(fit_8, data.frame(year = 25), type = 'probs')
 ```
 
 2. Repeat the analysis with the pneumonoconiosis status being treated as ordinal. 
 ```{r}
+fit_9 <- polr(status ~ year, Hess = T, weights = Freq, data = pneumo)
+summary(fit_9)
 
+predict(fit_9, data.frame(year = 25), type = 'probs')
 ```
 
 3. Now treat the response variable as hierarchical with top level indicating whether
 the miner has the disease and the second level indicating, given they have the
 disease, whether they have a moderate or severe case. 
 ```{r}
-
+df <- pneumo %>% filter(status=="normal" | status=="mild")
 ```
 
 4. Compare the three analyses.
